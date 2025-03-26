@@ -6,7 +6,6 @@ import os
 # Biến toàn cục: lưu thông tin file_hash → danh sách peer đang có file đó
 # Ví dụ: { "abc123": [ {"ip": "192.168.1.2", "port": 5000}, ... ] }
 file_peer_map = {}
-
 # Hàm xử lý từng kết nối đến từ peer
 def handle_peer(conn, addr):
     print(f"[+] Kết nối mới từ {addr}")
@@ -48,7 +47,21 @@ def handle_peer(conn, addr):
             # Chuyển danh sách peer thành chuỗi JSON và gửi lại cho peer
             response = json.dumps(peer_list)
             conn.sendall(response.encode())
-
+        elif action == "status":
+            file_hash = request.get("file_hash")
+            peer_info = {
+                "ip": addr[0],                        # IP của peer tự động lấy từ addr
+                "port": request.get("port")           # Port peer gửi kèm theo
+            }
+            state = request.get("state")
+            peer_list = file_peer_map.get(file_hash, [])  # Trả về danh sách peer nếu có
+            print(file_hash + " to " + json.dumps(peer_info) + " state: "+ state)
+            response = {
+                'action' : 'status_response',
+                'tracker_id' : '1',
+                'peers' : json.dumps(peer_list)
+            }
+            conn.sendall(json.dumps(response).encode('utf-8'))
         else:
             # Nếu action không hợp lệ
             conn.sendall(b"Unknown action\n")
@@ -123,6 +136,8 @@ def process_input(cmd):
             if not params[1]:
                 print('Argument infohash is required')
             # get_peers_keep_file(params[1])
+        elif params[0] == 'show':
+            print(file_peer_map)
         else:
             print('Invalid command')
     except IndexError as e:
