@@ -2,7 +2,7 @@ import socket   # Thư viện socket để kết nối TCP
 import json     # Định dạng dữ liệu kiểu JSON
 
 # --- Cấu hình kết nối tới tracker ---
-TRACKER_IP = "10.229.188.6"   # IP của máy chạy tracker (bạn đã cung cấp)
+TRACKER_IP = "192.168.1.153"   # IP của máy chạy tracker (bạn đã cung cấp)
 TRACKER_PORT = 8000           # Port tracker đang mở (mặc định mình dùng 8000)
 
 # --- Tạo socket TCP ---
