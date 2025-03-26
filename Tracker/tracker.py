@@ -1,7 +1,7 @@
 import socket            # Thư viện tạo kết nối mạng TCP
 import threading         # Dùng để xử lý nhiều kết nối từ peer cùng lúc
 import json              # Dùng để truyền nhận dữ liệu dưới dạng JSON
-
+from announce import handle_announce      # Hàm dùng để thêm hash file vào list
 # Biến toàn cục: lưu thông tin file_hash → danh sách peer đang có file đó
 # Ví dụ: { "abc123": [ {"ip": "192.168.1.2", "port": 5000}, ... ] }
 file_peer_map = {}
@@ -22,21 +22,13 @@ def handle_peer(conn, addr):
 
         # Nếu là thông báo "announce" – peer gửi thông tin file mà nó đang có
         if action == "announce":
-            file_hash = request.get("file_hash")      # Mã hash của file
+            file_hash = request.get("file_hash")
+            port = request.get("port")
             peer_info = {
-                "ip": addr[0],                        # IP của peer tự động lấy từ addr
-                "port": request.get("port")           # Port peer gửi kèm theo
+                "ip": addr[0],
+                "port": port
             }
-
-            # Nếu chưa có file này trong hệ thống thì thêm mới
-            if file_hash not in file_peer_map:
-                file_peer_map[file_hash] = []
-
-            # Nếu peer này chưa có trong danh sách, thì thêm vào
-            if peer_info not in file_peer_map[file_hash]:
-                file_peer_map[file_hash].append(peer_info)
-
-            # Trả về phản hồi đơn giản
+            handle_announce(file_peer_map, file_hash, peer_info)
             conn.sendall(b"Announce OK\n")
 
         # Nếu peer yêu cầu "get_peers" – muốn biết ai đang có file

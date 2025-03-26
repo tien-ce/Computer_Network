@@ -1,34 +1,46 @@
-import socket   # Thư viện socket để kết nối TCP
-import json     # Định dạng dữ liệu kiểu JSON
+import socket
+import threading
+import json
+from split_file import split_file
+from peer_server import start_peer_server
+import os
+# Địa chỉ của tracker
+TRACKER_IP = "10.229.188.6"
+TRACKER_PORT = 8000
+# Lấy đường dẫn tuyệt đối tới thư mục chứa file 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Ghép với đường dẫn tương đối đến file cần chia
+FILE_PATH = os.path.join(BASE_DIR,"file_server", "Alice_in_wonderland.txt")
+PIECE_SIZE = 150 * 1024  # 150 KB
 
-# --- Cấu hình kết nối tới tracker ---
-TRACKER_IP = "10.229.188.6"   # IP của máy chạy tracker (bạn đã cung cấp)
-TRACKER_PORT = 8000           # Port tracker đang mở (mặc định mình dùng 8000)
+# Port mà peer này sẽ mở ra để chia sẻ file
+UPLOAD_PORT = 5000
 
-# --- Tạo socket TCP ---
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# --- Kết nối tới tracker ---
-try:
-    print(f"[+] Kết nối tới tracker tại {TRACKER_IP}:{TRACKER_PORT}")
-    client.connect((TRACKER_IP, TRACKER_PORT))  # Kết nối TCP tới tracker
-
-    # --- Tạo request kiểu announce ---
-    request_data = {
-        "action": "announce",          # Hành động muốn gửi tới tracker
-        "file_hash": "abc123",         # Giả định: peer đang giữ file có hash abc123
-        "port": 5000                   # Cổng mà peer sẽ mở để chia sẻ (giả sử)
+# Hàm gửi thông báo announce đến tracker
+def announce(file_hash, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect((TRACKER_IP, TRACKER_PORT))
+    request = {
+        "action": "announce",
+        "file_hash": file_hash,
+        "port": port
     }
+    s.sendall(json.dumps(request).encode())
+    response = s.recv(4096).decode()
+    print("Tracker response:", response)
+    s.close()
 
-    # --- Gửi request (chuyển thành JSON rồi encode) ---
-    client.sendall(json.dumps(request_data).encode())
+# Bước 1: Chia file thành các mảnh
+print("Splitting file...")
+total_parts = split_file(FILE_PATH, PIECE_SIZE)
 
-    # --- Nhận phản hồi từ tracker ---
-    response = client.recv(4096).decode()
-    print(f"[Tracker Phản hồi] {response}")
+# Bước 2: Gửi announce lên tracker
+# print("Announcing to tracker...")
+# announce("test_file_hash", UPLOAD_PORT)
 
-except Exception as e:
-    print(f"[!] Lỗi khi kết nối tracker: {e}")
+# Bước 3: Khởi động server chia sẻ file cho các peer khác
+threading.Thread(target=start_peer_server, args=(UPLOAD_PORT, FILE_PATH, total_parts)).start()
 
-finally:
-    client.close()  # Đóng kết nối sau khi xong
+# Giữ chương trình chạy
+while True:
+    pass
