@@ -3,14 +3,14 @@ import json
 import os
 
 # Địa chỉ IP và cổng của peer server
-PEER_IP = "192.168.15.86"     # Cập nhật IP peer thật
+PEER_IP = "192.168.1.153"     # Cập nhật IP peer thật
 PEER_PORT = 5000              # Cổng peer server mở để chia sẻ
 
 # Đường dẫn tới file .torrent
 # Lấy đường dẫn tuyệt đối tới thư mục chứa file 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # Ghép với đường dẫn tương đối đến file cần chia
-TORRENT_PATH = os.path.join(BASE_DIR,"..","file_server","Alice_in_wonderland.txt.torrent")
+TORRENT_PATH = os.path.join(BASE_DIR,"..","file_client","keywords.txt.torrent")
 
 # Thư mục lưu mảnh
 SAVE_DIR = os.path.join(BASE_DIR,"..","file_client")
