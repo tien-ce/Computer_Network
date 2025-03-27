@@ -1,0 +1,15 @@
+/* styles.css hoặc file CSS tương ứng */
+.header {
+    width: 100%;
+}
+
+.swiper-container {
+    width: 100%;
+    height: auto; /* Hoặc một chiều cao cụ thể nếu cần */
+}
+
+.swiper-slide img {
+    width: 100%;
+    height: auto; /* Hoặc một chiều cao cụ thể nếu cần */
+    object-fit: cover; /* Đảm bảo hình ảnh không bị biến dạng */
+}

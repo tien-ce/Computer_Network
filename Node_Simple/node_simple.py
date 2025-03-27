@@ -5,7 +5,7 @@ from split_file import split_file
 from peer_server import start_peer_server
 import os
 # Địa chỉ của tracker
-TRACKER_IP = "10.229.188.6"
+TRACKER_IP = "10.0.108.24"
 TRACKER_PORT = 8000
 # Lấy đường dẫn tuyệt đối tới thư mục chứa file 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
