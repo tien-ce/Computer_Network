@@ -1,13 +1,13 @@
-import socket            # Thư viện tạo kết nối mạng TCP
-import threading         # Dùng để xử lý nhiều kết nối từ peer cùng lúc
-import json              # Dùng để truyền nhận dữ liệu dưới dạng JSON
-from announce import handle_announce      # Hàm dùng để thêm hash file vào list
+import socket  # Thư viện tạo kết nối mạng TCP
+import threading  # Dùng để xử lý nhiều kết nối từ peer cùng lúc
+import json  # Dùng để truyền nhận dữ liệu dưới dạng JSON
+from announce import handle_announce  # Hàm dùng để thêm hash file vào list
+
 # Biến toàn cục: lưu thông tin file_hash → danh sách peer đang có file đó
-# Ví dụ: { "abc123": [ {"ip": "192.168.1.2", "port": 5000}, ... ] }
 file_peer_map = {}
 
-# Hàm xử lý từng kết nối đến từ peer
 def handle_peer(conn, addr):
+    """Xử lý từng kết nối đến từ peer."""
     print(f"[+] Kết nối mới từ {addr}")
 
     try:
@@ -33,7 +33,7 @@ def handle_peer(conn, addr):
 
         # Nếu peer yêu cầu "get_peers" – muốn biết ai đang có file
         elif action == "get_peers":
-            file_hash = request.get("file_hash")          # Lấy mã hash file cần tìm
+            file_hash = request.get("file_hash")  # Lấy mã hash file cần tìm
             peer_list = file_peer_map.get(file_hash, [])  # Trả về danh sách peer nếu có
 
             # Chuyển danh sách peer thành chuỗi JSON và gửi lại cho peer
@@ -44,6 +44,9 @@ def handle_peer(conn, addr):
             # Nếu action không hợp lệ
             conn.sendall(b"Unknown action\n")
 
+    except json.JSONDecodeError:
+        print(f"[!] Lỗi: Không thể giải mã JSON từ peer {addr}")
+        conn.sendall(b"Invalid JSON format\n")
     except Exception as e:
         # In lỗi ra màn hình và trả về lỗi cho peer
         print(f"[!] Lỗi xử lý peer {addr}: {e}")
@@ -53,8 +56,8 @@ def handle_peer(conn, addr):
         # Đóng kết nối với peer
         conn.close()
 
-# Hàm chính để khởi chạy tracker
 def start_tracker(host="0.0.0.0", port=8000):
+    """Khởi chạy tracker để lắng nghe các kết nối từ peer."""
     # Tạo socket TCP
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -67,8 +70,7 @@ def start_tracker(host="0.0.0.0", port=8000):
 
     # Vòng lặp chấp nhận kết nối liên tục
     while True:
-        # Chờ một peer mới kết nối đến
-        print("Waiting connect")
+        print("Waiting for connections...")
         conn, addr = server.accept()    
         print(f"Connect from {addr}")
         # Tạo một luồng mới để xử lý peer đó
