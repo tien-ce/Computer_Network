@@ -1,8 +1,10 @@
 import os
 from torrent_handler import prepare_download_plan
 from commucation_peer_server import get_bitfields
+from commucation_peer_server import request_piece
 from get_peers import get_peers
 import json
+import time
 # Lấy đường dẫn tuyệt đối tới thư mục chứa file hiện tại (peer_client.py)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -11,10 +13,6 @@ TORRENT_PATH = os.path.join(BASE_DIR, "..", "file_client", "Alice_in_wonderland.
 
 # Thư mục dùng để lưu các file đã tải và các mảnh
 SAVE_DIR = os.path.join(BASE_DIR, "..", "file_client")
-
-# Địa chỉ IP của peer server sẽ kết nối đến để tải các mảnh
-PEER_IP = "192.168.15.86"  # Cập nhật IP đúng nếu cần
-PEER_PORT = 5000           # Cổng mà peer server đang lắng nghe
 
 # Địa chỉ IP và cổng của tracker dùng để gửi announce
 TRACKER_IP = "192.168.15.86"
@@ -26,14 +24,39 @@ TRACKER_PORT = 8000
 complete = False
 while complete == False:
     with open(TORRENT_PATH, 'r') as f:
-        file_hash = json.load(f)["file_hash"]
-        file_name = json.load(f)["file_name"]
-        piece_count = json.load(f)["piece_count"]
+        meta = json.load(f)
+        file_hash = meta["file_hash"]
+        file_name = meta["file_name"]
+        piece_count = meta["piece_count"]
     # Bước 1 : Lấy danh sách các peer chứa file đang cần
     peers = get_peers(file_hash,TRACKER_IP,TRACKER_PORT) # Trả về danh sách các peer chứa file
     # Bước 2 : Lập bảng các mảnh sẽ có các các peer nào có
     os.makedirs(SAVE_DIR,exist_ok=True)
     save_path = os.path.join(SAVE_DIR,file_name)    # Đường dẫn lưu file
-    bitfields = get_bitfields(peers,piece_count)    # Danh sách các peer chứa mảnh
+    bitfields = get_bitfields(peers,piece_count)    # Các peer chứa các mảnh nào
+    # [{ip:...,port:....} : 0110 , {ip:...,port:....} : 1110]  
+    piece_to_peer = prepare_download_plan(bitfields=bitfields,piece_count=piece_count) # Danh sách các peer tương ứng với mảnh
     # [0: {ip:...,port:....},{ip:...,port},....]
-     
+    # Bước 3 : Tải các part nếu có peer_server đang chứa
+    complete = True
+    for i in range(piece_count):
+        if os.path.exists(f"{save_path}.part{i}"):
+            continue    #Nếu đã có mảnh thì bỏ qua
+        peer_list = piece_to_peer.get(i,[]) # Danh sách các peer chứa part thứ i
+        if not peer_list:
+            print(f"[!] No peer has part {i}, skipping.") # Part thứ i không có peer nào chứa
+            complete = False
+            continue
+        # Chọn peer đầu tiên trong danh sách có mảnh này để tải
+        peer_ip, peer_port = peer_list[0]
+        request_piece(peer_ip=peer_ip,peer_port=peer_port,file_path=save_path,index=i) # Tải peer xuống 
+    time.sleep(1) # Tránh gọi quá nhiều lần
+# Bước 4 : Ghép file
+with open(save_path, 'wb') as out:
+    for i in range(piece_count):
+        part_file = f"{save_path}.part{i}"
+        if os.path.exists(part_file):
+            with open(part_file, 'rb') as pf:
+                out.write(pf.read())
+
+print(f"File merged as {save_path}")

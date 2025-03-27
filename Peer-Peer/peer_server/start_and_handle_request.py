@@ -32,13 +32,13 @@ def handle_peer_request(conn, addr, file_path, total_parts):
             # Bitfield là một danh sách 0/1 biểu diễn mảnh nào có (1 là có, 0 là không có)
             bitfield = []
             for index in range(total_parts):
-                path_part = "f{file_path}.part{i}"  # Đường dẫn đến part của 1 file
-                if os.path.exists(part_file):
-                    bitfield.append(1)  # Có mảnh i  
+                path_part = f"{file_path}.part{index}"  # Đường dẫn đến part của 1 file
+                if os.path.exists(path_part):
+                    bitfield.append(1)  # Có mảnh index  
                 else:
-                    bitfield.append(0) # k có mảnh i
+                    bitfield.append(0) # k có mảnh index
             # Gửi bitfield dạng JSON về lại cho peer yêu cầu
-            conn.sendall(json.dumps({"bitfield": bitfield}).encode()) # Dữ liệu trả về sẽ là {"bitfield": [0,1,1,1,....]}
+            conn.sendall(json.dumps({"bitfield": bitfield}).encode()) # Dữ liệu trả về sẽ là {"bitfield": [0,0,1,0...]}
             print(f"Sent bitfield to {addr}")
 
         # Nếu peer yêu cầu "get_piece": tải một mảnh cụ thể theo chỉ số
