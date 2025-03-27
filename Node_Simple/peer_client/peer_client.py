@@ -1,71 +1,34 @@
-import socket
-import json
 import os
+from torrent_handler import download_from_torrent
+from announce import announce_to_tracker
 
-# Địa chỉ IP và cổng của peer server
-PEER_IP = "192.168.1.153"     # Cập nhật IP peer thật
-PEER_PORT = 5000              # Cổng peer server mở để chia sẻ
-
-# Đường dẫn tới file .torrent
-# Lấy đường dẫn tuyệt đối tới thư mục chứa file 
+# Lấy đường dẫn tuyệt đối tới thư mục chứa file hiện tại (peer_client.py)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Ghép với đường dẫn tương đối đến file cần chia
-TORRENT_PATH = os.path.join(BASE_DIR,"..","file_client","keywords.txt.torrent")
 
-# Thư mục lưu mảnh
-SAVE_DIR = os.path.join(BASE_DIR,"..","file_client")
-print("Torrent file path:", TORRENT_PATH)
-print("Save directory:", SAVE_DIR)
-# Hàm gửi yêu cầu tải một mảnh
-def request_piece(peer_ip, peer_port, file_path, index):
-    try:
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((peer_ip, peer_port))
-        s.sendall(str(index).encode())
+# Ghép đường dẫn để tìm tới file .torrent cần sử dụng
+TORRENT_PATH = os.path.join(BASE_DIR, "..", "file_client", "keywords.txt.torrent")
 
-        part_data = b""
-        while True:
-            chunk = s.recv(1024)
-            if not chunk:
-                break
-            part_data += chunk
+# Thư mục dùng để lưu các file đã tải và các mảnh
+SAVE_DIR = os.path.join(BASE_DIR, "..", "file_client")
 
-        part_file = f"{file_path}.part{index}"
-        with open(part_file, 'wb') as f:
-            f.write(part_data)
+# Địa chỉ IP của peer server sẽ kết nối đến để tải các mảnh
+PEER_IP = "192.168.1.153"  # Cập nhật IP đúng nếu cần
+PEER_PORT = 5000           # Cổng mà peer server đang lắng nghe
 
-        print(f"Downloaded part {index} and saved as {part_file}")
-        s.close()
-    except Exception as e:
-        print(f"Error downloading part {index}: {e}")
+# Địa chỉ IP và cổng của tracker dùng để gửi announce
+TRACKER_IP = "192.168.1.153"
+TRACKER_PORT = 8000
 
-# Hàm đọc file .torrent và tải tất cả các mảnh
-def download_from_torrent(torrent_path):
-    with open(torrent_path, 'r') as f:
-        meta = json.load(f)
+# Đọc file .torrent để lấy file_hash (định danh duy nhất của file cần chia sẻ)
+# file_hash này sẽ dùng để thông báo lên tracker xem node này đang tải/giữ file nào
+import json
+with open(TORRENT_PATH, 'r') as f:
+    file_hash = json.load(f)["file_hash"]
 
-    file_name = meta["file_name"]
-    piece_count = meta["piece_count"]
+# Gửi thông báo announce tới tracker
+# Nội dung thông báo gồm: action = "announce", file_hash, và cổng của peer
+announce_to_tracker(file_hash, PEER_PORT, TRACKER_IP, TRACKER_PORT)
 
-    # Tạo thư mục lưu nếu chưa có
-    os.makedirs(SAVE_DIR, exist_ok=True)
-    save_path = os.path.join(SAVE_DIR, file_name)
-
-    # Tải từng mảnh
-    for i in range(piece_count):
-        request_piece(PEER_IP, PEER_PORT, save_path, i)
-
-    print("All parts downloaded.")
-
-    # Ghép lại file hoàn chỉnh
-    merged_path = f"{save_path}"
-    with open(merged_path, 'wb') as out:
-        for i in range(piece_count):
-            part_file = f"{save_path}.part{i}"
-            with open(part_file, 'rb') as pf:
-                out.write(pf.read())
-
-    print(f"File merged as {merged_path}")
-
-# Gọi hàm chính
-download_from_torrent(TORRENT_PATH)
+# Gọi hàm để tiến hành tải các mảnh từ peer server
+# Sau khi tải đủ các mảnh, tự động ghép thành file hoàn chỉnh theo định dạng ban đầu
+download_from_torrent(TORRENT_PATH, SAVE_DIR, PEER_IP, PEER_PORT)
