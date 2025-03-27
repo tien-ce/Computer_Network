@@ -3,22 +3,24 @@ import json
 import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from split_file import split_file
+from peer_server import start_peer_server
+import threading
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes
 
 # Peer server configuration
 PEER_IP = "10.0.108.24"  # Update to the actual peer IP
-PEER_PORT = 5000          # Port for the peer server
-
-TRACKER_IP = "10.0.108.24"  # Cập nhật theo địa chỉ IP của tracker
+PEER_PORT = 5000          # Default port for the peer server
+TRACKER_IP = "10.0.108.24"  # Update to the tracker IP
 TRACKER_PORT = 8000     
-     
 
 # Directory for saving downloaded pieces
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SAVE_DIR = os.path.join(BASE_DIR, "..", "file_client")
 os.makedirs(SAVE_DIR, exist_ok=True)
+FILE_PATH = os.path.join(BASE_DIR, "file_server", "Alice_in_wonderland.txt")
 
 @app.route('/')
 def index():
@@ -95,12 +97,47 @@ def delete_file():
         return jsonify({"message": f"File {file_name} deleted successfully."}), 200
     else:
         return jsonify({"error": "File not found."}), 404
-    
+
+# Global variable to track server state
+is_connect = False
+
 @app.route('/join', methods=['POST'])
 def join_port():
-    """Delete a specified file from the server."""
+    """Join the tracker with the peer port."""
+    global PEER_PORT, is_connect  # Use global variables for the peer configuration
     peer_port = request.json.get('peer_port')
 
+    if not peer_port:
+        return jsonify({"error": "Peer port is required!"}), 400
+
+    PEER_PORT = peer_port  # Update the peer port
+    print(f"Starting peer server on port {PEER_PORT}...")
+    
+    if not is_connect:
+        threading.Thread(target=start_peer_server, args=(PEER_PORT, FILE_PATH)).start()
+        is_connect = True  # Mark that the peer server has started
+
+        # Announce to the tracker
+        file_hash = "test_file_hash"  # Replace with actual file hash
+        announce_to_tracker(file_hash, PEER_PORT)
+
+    return jsonify({"message": f"Peer server started on port {PEER_PORT}!"}), 200
+
+def announce_to_tracker(file_hash, port):
+    """Send an announce message to the tracker."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((TRACKER_IP, TRACKER_PORT))
+            request_data = {
+                "action": "announce",
+                "file_hash": file_hash,
+                "port": port
+            }
+            s.sendall(json.dumps(request_data).encode())
+            response = s.recv(4096).decode()
+            print("Tracker response:", response)
+    except Exception as e:
+        print(f"[!] Connection error to tracker: {e}")
 
 if __name__ == "__main__":
     app.run(debug=True)
