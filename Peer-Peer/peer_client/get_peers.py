@@ -16,7 +16,6 @@ def get_peers(file_hash, tracker_ip, tracker_port):
         # Tạo kết nối TCP tới tracker
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.connect((tracker_ip, tracker_port))
-
             # Gửi yêu cầu dưới dạng JSON
             request_data = {
                 "action": "get_peers",
