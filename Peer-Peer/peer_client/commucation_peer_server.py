@@ -49,13 +49,22 @@ def get_bitfields(peers, total_parts, timeout=3):
 
     return bitfields
 
+
+import socket
+
 def request_piece(peer_ip, peer_port, file_path, index):
-    """Yêu cầu 1 mảnh từ peer server."""
+    """Yêu cầu một mảnh từ peer server theo đúng định dạng action/index."""
+
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(5)  # Giới hạn thời gian chờ kết nối là 5 giây
             s.connect((peer_ip, peer_port))
-            s.sendall(str(index).encode())
 
+            # Tạo chuỗi JSON thủ công và gửi đi
+            request = '{"action": "get_piece", "index": ' + str(index) + '}'
+            s.sendall(request.encode())
+
+            # Nhận dữ liệu trả về
             part_data = b""
             while True:
                 chunk = s.recv(1024)
@@ -63,10 +72,18 @@ def request_piece(peer_ip, peer_port, file_path, index):
                     break
                 part_data += chunk
 
+        if not part_data:
+            print("Empty response from", peer_ip, peer_port, "for part", index)
+            return
+
         part_file = f"{file_path}.part{index}"
         with open(part_file, 'wb') as f:
             f.write(part_data)
 
-        print(f"Downloaded part {index} and saved as {part_file}")
+        print("Downloaded part", index, "from", peer_ip, peer_port)
+
+    except socket.timeout:
+        print("Timeout when connecting to", peer_ip, peer_port, "for part", index)
     except Exception as e:
-        print(f"Error downloading part {index}: {e}")
+        print("Error downloading part", index, "from", peer_ip, peer_port, ":", e)
+
