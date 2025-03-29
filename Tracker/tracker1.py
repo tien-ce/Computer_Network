@@ -61,7 +61,8 @@ def handle_announce(addr, params):
     info_hash = params.get("info_hash", [""])[0].lower()
     peer_id = params.get("peer_id", [""])[0]
     event = params.get("event", [""])[0]
-    current_peer = {"peer_id": peer_id, "ip": addr[0], "port": addr[1]}
+    port = params.get("port", [""])[0]
+    current_peer = {"peer_id": peer_id, "ip": addr[0], "port": port}
     if not info_hash:
         return "HTTP/1.1 400 Bad Request\r\n\r\nMissed infomation"
     if event == "started":
