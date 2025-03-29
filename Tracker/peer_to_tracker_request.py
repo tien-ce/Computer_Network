@@ -43,8 +43,8 @@ def send_tracker_request(tracker_url, info_hash, peer_id, port, event="started",
 # Ví dụ sử dụng hàm
 tracker_url = "http://localhost:8000/announce"
 info_hash = "abcdef123456abcdef123456abcdef123456abcdef12"  # Ví dụ hash của torrent
-peer_id = "-PC0001-123456789012"
+peer_id = "PEER1"
 port = 6881
-
-result = send_tracker_request(tracker_url, info_hash, peer_id, port)
+event = "completed"
+result = send_tracker_request(tracker_url, info_hash, peer_id, port, event)
 print("Phản hồi từ tracker:", result)
