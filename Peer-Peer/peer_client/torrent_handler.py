@@ -1,7 +1,7 @@
 import json
 import os
-from commucation_peer_server import request_piece
-from commucation_peer_server import get_bitfields
+from peer_client.commucation_peer_server import request_piece
+from peer_client.commucation_peer_server import get_bitfields
 def prepare_download_plan(bitfields, piece_count):
     """
     Dựa vào bitfield của các peer, xác định xem mảnh nào có thể tải từ những peer nào.
@@ -35,7 +35,7 @@ def prepare_download_plan(bitfields, piece_count):
 
 import json
 import os
-from commucation_peer_server import request_piece, get_bitfields
+from peer_client.commucation_peer_server import request_piece, get_bitfields
 
 def download_from_torrent(torrent_path, save_dir, peers):
     """

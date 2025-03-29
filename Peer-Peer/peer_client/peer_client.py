@@ -1,7 +1,7 @@
 import os
 import json
 import time
-from torrent_handler import prepare_download_plan
+from peer_client.torrent_handler import prepare_download_plan
 from peer_client.commucation_peer_server import get_bitfields
 from peer_client.commucation_peer_server import request_piece
 from peer_shared.Info_shared import TRACKER_IP, TRACKER_PORT
@@ -20,7 +20,7 @@ def start_download_from_torrent(TORRENT_PATH,SAVE_DIR):
             file_hash = meta["file_hash"]
             file_name = meta["file_name"]
             piece_count = meta["piece_count"]
-
+            piece_size = meta['piece_size']
         # Bước 1 : Lấy danh sách các peer chứa file đang cần
         peers = get_peers(file_hash, TRACKER_IP, TRACKER_PORT)  # Trả về danh sách các peer chứa file
 
@@ -41,7 +41,8 @@ def start_download_from_torrent(TORRENT_PATH,SAVE_DIR):
                 complete = False
                 continue
             peer_ip, peer_port = peer_list[0]  # Chọn peer đầu tiên trong danh sách
-            request_piece(peer_ip=peer_ip, peer_port=peer_port, file_path=save_path, index=i)
+            request_piece(peer_ip=peer_ip, peer_port=peer_port, file_path=save_path,
+                           index=i,file_hash=file_hash,peer_id=None,piece_size=piece_size,total_pieces=piece_count)
 
         time.sleep(3)  # Tránh gọi liên tục
 

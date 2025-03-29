@@ -6,6 +6,7 @@ import threading
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.join(BASE_DIR, "..")  # thư mục  cha
 sys.path.append(PROJECT_ROOT)
+sys.path.append(BASE_DIR)
 #-------------------------------------------------------------------------------------------------#
 
 
@@ -18,16 +19,30 @@ from peer_shared.choose_file_ui import choose_torrent_file,choose_save_dir,get_u
 from parse_torrent import parse_torrent_file
 torrent_path = None
 
-def run_file_chooser():
-    global torrent_path
-    torrent_path = choose_torrent_file(PROJECT_ROOT)
+enter_event = threading.Event()
+
+def wait_for_enter():
+    """
+    Luồng phụ: chờ người dùng nhấn Enter, sau đó set event.
+    Dùng input() để đảm bảo tương thích tốt với mọi môi trường.
+    """
+    while True:
+        _ = input()  # Chờ người dùng nhấn Enter
+        enter_event.set()
+
 def run_agent():
     print("Agent started. Possible commands:")
-    print("  uploadfile  (to choose a .torrent file and share it)")
-    print("  exit        (to exit the program)")
+    print("  uploadfile     (to choose a .torrent file and share it)")
+    print("  exit           (to exit the program)")
+    print("  downloadfile   (to choose a .torrent file and download it)")
     print()
     command = None
+    threading.Thread(target=wait_for_enter, daemon=True).start()
     while True:
+        # Chờ Enter được nhấn
+        print("Waiting for Enter to continue...")
+        enter_event.wait()
+        enter_event.clear()  # Đặt lại trạng thái cho lần Enter tiếp theo
         command = get_user_command()
         if not command:
             print("No command entered. Exiting.")
@@ -64,12 +79,13 @@ def run_agent():
                 print("Invalid port input.")
                 exit()
             upload_port = int(port_str)
+            start_upload_server(file_hash,file_path,piece_count,piece_size,upload_port)
             # upload_port = 5000
             # Gọi hàm khởi động server chia sẻ
 
         elif command == "downloadfile":
             torrent_client_path = choose_torrent_file(PROJECT_ROOT)
-            save_dir = start_upload_server(file_hash, file_path, piece_count, piece_size, upload_port)
+            save_dir = choose_save_dir(PROJECT_ROOT)
             start_download_from_torrent(torrent_client_path,save_dir)
         elif command == "exit":
             print("Shutting down agent...")
