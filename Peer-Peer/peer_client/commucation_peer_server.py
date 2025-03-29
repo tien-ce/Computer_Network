@@ -50,7 +50,6 @@ def get_bitfields(peers, total_parts, timeout=3):
     return bitfields
 
 
-import socket
 
 def request_piece(peer_ip, peer_port, file_path, index):
     """Yêu cầu một mảnh từ peer server theo đúng định dạng action/index."""

@@ -8,7 +8,7 @@ import json
 import os
 import json
 
-def handle_peer_request(conn, addr, file_path, total_parts):
+def handle_peer_request(conn, addr, file_path, total_parts,piece_length):
     """
     Hàm xử lý yêu cầu từ một peer khác.
     Có thể là yêu cầu gửi một mảnh cụ thể hoặc yêu cầu gửi danh sách các mảnh đang có.
@@ -59,7 +59,6 @@ def handle_peer_request(conn, addr, file_path, total_parts):
             else:
                 # Nếu mảnh không tồn tại thì in ra lỗi (nhưng không crash)
                 print(f"Part {part_index} not found on this peer")
-
         else:
             # Nếu nhận action không đúng định dạng
             print(f"Unknown action from {addr}: {action}")
@@ -73,7 +72,7 @@ def handle_peer_request(conn, addr, file_path, total_parts):
         conn.close()
 
 # Hàm khởi chạy server lắng nghe yêu cầu tải mảnh từ peer khác
-def start_peer_server(port, file_path, total_parts): 
+def start_peer_server(port, file_path, total_parts,piece_length): 
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(("0.0.0.0", port))
     server.listen(5)
@@ -83,6 +82,6 @@ def start_peer_server(port, file_path, total_parts):
     while True:
         conn, addr = server.accept()
         thread = threading.Thread(
-            target=handle_peer_request, args=(conn, addr, file_path, total_parts)
+            target=handle_peer_request, args=(conn, addr, file_path, total_parts,piece_length)
         )
         thread.start()
