@@ -15,10 +15,9 @@ def get_peers(file_hash, tracker_ip, tracker_port, peer_id=None):
     - Danh sách các peer ở dạng [{"peer_id": ..., "ip": ..., "port": ...}, ...]
     """
     response = announce(
-        tracker_ip=tracker_ip,
-        tracker_port=tracker_port,
         info_hash=file_hash,
         port=None,
+        peer_id=None,
         event="started",
         uploaded=0,
         downloaded=0,

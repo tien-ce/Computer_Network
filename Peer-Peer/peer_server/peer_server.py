@@ -24,6 +24,7 @@ def start_upload_server(file_hash, file_path, piece_count, piece_size, upload_po
     # Gửi thông báo tới tracker: peer này đã hoàn thành file, trở thành seeder
     announce(
         info_hash=file_hash,
+        peer_id= None,
         port=upload_port,
         event="completed",
         uploaded=0,
