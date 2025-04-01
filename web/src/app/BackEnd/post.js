@@ -120,8 +120,6 @@ export function Post() {
     return (
         <div className="container mx-auto">
             <header className="flex"><p className="text-[70px] font-serif">List Item</p></header>
-            <button onClick={handleFolderSelect}>Chọn Thư Mục</button>
-            <p>Đường dẫn thư mục: {folderPath}</p>
             <div>
                 <p className="bg-[#D9EDF7] py-[15px] pl-[15px] rounded-t-lg flex">List Items</p>
                 <div className="border-x-4 border-b-4 pb-[20px] px-[20px] rounded-b-lg border-[#D9EDF7]">
