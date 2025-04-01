@@ -2,6 +2,7 @@ import socket            # Thư viện tạo kết nối mạng TCP
 import threading         # Dùng để xử lý nhiều kết nối từ peer cùng lúc
 import json              # Dùng để truyền nhận dữ liệu dưới dạng JSON
 from announce import handle_announce      # Hàm dùng để thêm hash file vào list
+import select 
 # Biến toàn cục: lưu thông tin file_hash → danh sách peer đang có file đó
 # Ví dụ: { "abc123": [ {"ip": "192.168.1.2", "port": 5000}, ... ] }
 file_peer_map = {}
@@ -68,12 +69,13 @@ def start_tracker(host="0.0.0.0", port=8000):
     # Vòng lặp chấp nhận kết nối liên tục
     while True:
         # Chờ một peer mới kết nối đến
-        print("Waiting connect")
-        conn, addr = server.accept()    
-        print(f"Connect from {addr}")
-        # Tạo một luồng mới để xử lý peer đó
-        thread = threading.Thread(target=handle_peer, args=(conn, addr))
-        thread.start()
+        # print("Waiting connect")
+        ready_sockets, _, _ = select.select([server], [], [], 1.0)
+        if server in ready_sockets:
+            conn, addr = server.accept()
+            print(f"Connect from {addr}")
+            thread = threading.Thread(target=handle_peer, args=(conn, addr), daemon=True)
+            thread.start()
 
 # Nếu file này được chạy trực tiếp (không phải import)
 if __name__ == "__main__":
