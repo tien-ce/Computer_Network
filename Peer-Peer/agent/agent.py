@@ -70,8 +70,7 @@ def run_agent():
             if not file_name:
                 print("not file name")
                 return
-
-            # file gốc nằm trong thư mục file_server
+            # file gốc nằm trong thư mục file_server (Đang fix cố định dựa vào file name)
             file_path = os.path.join(PROJECT_ROOT, "file_server", file_name)
             time.sleep(0.1)
             port_str = get_port()
