@@ -27,9 +27,7 @@ export function Home() {
     const handleDownload = async () => {
         setStatus('Starting download...');
         try {
-            const response = await axios.post('http://127.0.0.1:5000/download', {
-                // Gửi yêu cầu tải file nếu cần
-            });
+            const response = await axios.post('http://127.0.0.1:5000/download', {});
             setStatus(response.data.message);
         } catch (error) {
             if (error.response) {
@@ -55,6 +53,7 @@ export function Home() {
             }
         }
     };
+
     return (
         <div className="h-screen flex justify-center items-center bg-gray-100">
             <div className="bg-white p-6 rounded-lg shadow-md">
@@ -72,7 +71,6 @@ export function Home() {
                 >
                     Join
                 </button>
-
                 {status && <p className="mt-4 text-center text-green-600">{status}</p>}
             </div>
         </div>

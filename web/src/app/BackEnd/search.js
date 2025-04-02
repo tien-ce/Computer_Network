@@ -80,6 +80,7 @@ class Trie {
         result = Object.values(currentNode.books);
         return result;
     }
+
     clear() {
         this.root = new Node(); 
     }
@@ -87,32 +88,45 @@ class Trie {
 
 const trie = new Trie();
 
-export function Search(fetchedData, checkedItems, handleCheckboxChange, formatPrice, handleStatusChange, toggleModal, open, edit, setID) {
+export function Search(item, checkedItems, handleCheckboxChange, handleDownload, Action) {
     const [results, setResults] = useState([]);
     const [currentCategory, setCurrentCategory] = useState('Tìm theo tên');
     const [index, setIndex] = useState(0);
-    const resultsRef = useRef();
     const resultsRef1 = useRef();
-    const data = fetchedData;
+    const data = item;
     const [Open, setOpen] = useState(false);
 
     useEffect(() => {
-        if (Array.isArray(data) && data.length > 0 && currentCategory === "Tìm theo tên") {
-            trie.clear();
+        trie.clear();
+    
+        if (Array.isArray(data) && data.length > 0) {
             data.forEach(element => {
-                if (element && element.name) {
-                    trie.addWord(element.name, element);
-                }
-            });
-        }else if (Array.isArray(data) && data.length > 0 && currentCategory === "Tìm theo ID") {
-            trie.clear();
-            data.forEach(element => {
-                if (element && element.id.toString()) {
-                    trie.addWord(element.id.toString(), element);
+                if (element) {
+                    const dataKey = getDataKey(currentCategory);
+                    if (element[dataKey]) {
+                        trie.addWord(element[dataKey].toString(), element);
+                    }
                 }
             });
         }
     }, [data, currentCategory]);
+
+    const getDataKey = (category) => {
+        switch (category) {
+            case "Tìm theo tên":
+                return "file_name";
+            case "Tìm theo File Size":
+                return "file_size";
+            case "Tìm theo Piece Size":
+                return "piece_size";
+            case "Tìm theo Piece Count":
+                return "piece_count";
+            case "Tìm theo File Hash":
+                return "file_hash";
+            default:
+                return null;
+        }
+    };
 
     const test = (event) => {
         const { value } = event.target;
@@ -122,7 +136,10 @@ export function Search(fetchedData, checkedItems, handleCheckboxChange, formatPr
 
     const categories = [
         "Tìm theo tên",
-        "Tìm theo ID",
+        "Tìm theo File Size",
+        "Tìm theo Piece Size",
+        "Tìm theo Piece Count",
+        "Tìm theo File Hash",
     ];
 
     function getHTML() {
@@ -132,16 +149,12 @@ export function Search(fetchedData, checkedItems, handleCheckboxChange, formatPr
                     data={results}
                     checkedItems={checkedItems}
                     handleCheckboxChange={handleCheckboxChange}
-                    formatPrice={formatPrice}
-                    handleStatusChange={handleStatusChange}
-                    toggleModal={toggleModal}
-                    open={open}
-                    edit={edit}
-                    setID={setID}
-                    results={results}
+                    handleDownload={handleDownload}
+                    Action={Action}
                 />
             );
         }
+        return null; 
     }
 
     const SecrchResult = getHTML();
@@ -162,7 +175,7 @@ export function Search(fetchedData, checkedItems, handleCheckboxChange, formatPr
                 handleClick(index);
             }}
         >
-            <span className="ml-[10px]">{element}</span>
+            <span className="">{element}</span>
         </li>
     ));
 

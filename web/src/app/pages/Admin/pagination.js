@@ -6,7 +6,7 @@ import { faBars } from '@fortawesome/free-solid-svg-icons';
 import Modal from "../helper/modal";
 import React, { useState } from 'react';
 import "./style/style.css"
-const PaginationHelper = ({ data = [], checkedItems, handleCheckboxChange, formatPrice, handleStatusChange, toggleModal, open, edit, setID, results}) => {
+const PaginationHelper = ({ data = [], checkedItems, handleCheckboxChange, handleDownload, Action}) => {
     const [currentPage, setCurrentPage] = useState(1);
     const pagination = {
         totalItems: data.length,
@@ -134,71 +134,42 @@ const PaginationHelper = ({ data = [], checkedItems, handleCheckboxChange, forma
     let index = (currentPage - 1) * totalItemsPerPage;
     let max_index = totalItemsPerPage;
 
-    if(edit){
-        checkedItems = [];
-    }
-
     let type;
 
-    edit ? type = "radio" : type = "checkbox";
-
     function getData() {
-        return data.slice(index, index + max_index).map((element, index) => (
-            <ul className={`flex text-[20px] py-2  ${index % 2 === 0 ? "bg-[#E0E3E7]" : ""}`} key={element.id}>
-                <li className="w-[2%] px-[2%]">
-                    <input type={type} className="size-4 rounded-[50%] cursor-pointer"
-                        checked={checkedItems[index]}
-                        onChange={() => {
-                            handleCheckboxChange(index, results);
-                        }}
-                        name = "isRadio"
-                    />
-                </li>
-                <li className="w-[5%] px-[2%]">{element.id}</li>
-                <li className="w-[30%] px-[2%]">{element.name}</li>
-                <li className="w-[13%]">{formatPrice(element.gia_goc)}</li>
-                <li className="w-[10%] px-[1.5%]">{formatPrice(element.gia)}</li>
-                <li className="w-[10%] flex items-center justify-center">{element.giam_gia}</li>
-                <li class="checkbox-wrapper-8 w-[8%]  cursor-pointer ml-[3%] rounded-lg flex items-center justify-center" >
-                    <input class="tgl tgl-skewed" onClick={() => handleStatusChange(element.id)} id={index} checked={element.Status === "Active" ? true : false} type="checkbox"/>
-                    <label class="tgl-btn" data-tg-off="InActive" data-tg-on="Active"  for={index}></label>
-                </li>
-                <li className="w-[10%] pl-[7.5%] flex items-center justify-center cursor-pointer" onClick={() => toggleModal(index)}>
-                    <FontAwesomeIcon className="size-7" icon={faBars} />
-                </li>
-                {open[index] && (
-                    <Modal open={open[index]} onClose={() => toggleModal(index)}>
-                        <ul className="w-[500px] text-[30px] text-white">
-                            <li className="px-[2%]">Tập: <label className="text-[red]">{element.tap}</label></li>
-                            <li className="px-[2%] bg-[#2D2F39]">Tác giả: <label className="text-[red]">{element.tac_gia}</label></li>
-                            <li className="px-[2%]">Đối tượng: <label className="text-[red]">{element.doi_tuong}</label></li>
-                            <li className="px-[2%] bg-[#2D2F39]">Khuôn khổ: <label className="text-[red]">{element.khuon_kho}</label></li>
-                            <li className="px-[2%]">Số trang: <label className="text-[red]">{element.Page}</label></li>
-                            <li className="px-[2%] bg-[#2D2F39]">Trọng lượng: <label className="text-[red]">{element.trong_luong}</label></li>
-                        </ul>
-                    </Modal>
-                )}
+        const itemsToRender = data.slice(index, index + max_index);
+    
+        const paddedItems = [...itemsToRender, ...Array(Math.max(0, max_index - itemsToRender.length)).fill({})];
+    
+        return (
+            <ul>
+                {paddedItems.map((element, index) => (
+                    <ul key={index} className={`flex py-[10px] h-[50px] ${index % 2 === 0 ? "bg-[#E0E3E7]" : ""} text-[18px] border-b`}>
+                        <li className="w-[2%] pl-[2%]">
+                            {element.file_name &&  <input type="checkbox" className="size-4 cursor-pointer" checked={checkedItems[index]} onClick={() => handleCheckboxChange(index)} />} 
+                        </li>
+                        <li className="w-[25%]">{element.file_name || ''}</li>
+                        <li className="w-[10%]">{element.file_size || ''}</li>
+                        <li className="w-[10%]">{element.piece_size || ''}</li>
+                        <li className="w-[12%] px-[2%]">{element.piece_count || ''}</li>
+                        <li className="w-[30%] px-[2%]">{element.file_hash || ''}</li>
+                        <li className="checkbox-wrapper-8 w-[10%] cursor-pointer rounded-lg flex items-center justify-center" onClick={() => handleDownload(index)}>
+                            {element.file_name &&  Action}
+                        </li>
+                    </ul>
+                ))}
             </ul>
-        ));
+        );
     }
-
-    const countStatus = results.reduce((accumulator, item) => {
-        if (item.Status === "Active") {
-            accumulator.active += 1;
-        } else if (item.Status === "Inactive") {
-            accumulator.inactive += 1;
-        }
-        return accumulator;
-    }, { active: 0, inactive: 0 });
 
     return (
         <div className='shadow-lg rounded-lg'>
             {getData()}
             <div className='flex relative h-[70px] w-full border-t border-[#D0D1D3]'>
                 <div className='flex  relative items-center text-[20px] '>
-                    <p className='ml-[10px]'> Tổng số sản phẩm được tìm thấy: {results.length}</p>
-                    <p className='ml-[50px]'> Active: {countStatus.active}</p>
-                    <p className='ml-[50px]'> Inactive: {countStatus.inactive}</p>
+                    <p className='ml-[10px]'> Tổng số sản phẩm được tìm thấy: {data.length}</p>
+                    <p className='ml-[50px]'> Active: </p>
+                    <p className='ml-[50px]'> Inactive: </p>
                 </div>
                 <nav className='absolute right-0'>
                     <ul className="inline-flex text-[30px] max-sm:text-[15px] max-sm:w-[30]">

@@ -195,12 +195,12 @@ export function Navbar() {
                                 <a href={"/admin/input"} className={`my-1 cursor-pointer ${isActive === "input" ? 'bg-[#2D2F39] text-[#62fcaf]' : ''} `}>
                                     {isActive !== "input" && (
                                         <a className="flex py-7 bg-[none] w-full pl-4 rounded-lg content-center hover:bg-[#2D2F39] cursor-pointer">
-                                            <p className="text-[20px]">Add Item</p>
+                                            <p className="text-[20px]">Upload Item</p>
                                         </a>
                                     )}
                                     {isActive === "input" && (
                                         <a onClick={() => navigate(-1)} className="flex py-7 bg-[none] w-full pl-4 rounded-lg content-center hover:bg-[#2D2F39] cursor-pointer">
-                                            <p className="text-[20px]">Add Item</p>
+                                            <p className="text-[20px]">Upload Item</p>
                                         </a>
                                     )}
                                 </a>

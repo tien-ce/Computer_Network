@@ -6,7 +6,7 @@ export function TorrentFileReader() {
     const [error, setError] = useState(null);
     
     const importAll = (r) => r.keys().map(r);
-    const torrentFiles = importAll(require.context('./../../../../file_server', true, /\.(torrent)$/));
+    const torrentFiles = importAll(require.context('./../../../../Peer-Peer/file_server', true, /\.(torrent)$/));
     
     useEffect(() => {
         const fetchTorrentData = async () => {

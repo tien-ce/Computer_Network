@@ -20,10 +20,25 @@ export function Post() {
     const [Use, setUse] = useState("Bulk Action");
     const [allChecked, setAllChecked] = useState(false);
     const importAll = (r) => r.keys().map(r);
-    const torrentFiles = importAll(require.context('./../../../../file_server', true, /\.(torrent)$/));
+    const torrentFiles = importAll(require.context('./../../../../Peer-Peer/file_server', true, /\.(torrent)$/));
     const [checkedItems, setCheckedItems] = useState(Array(torrentFiles.length).fill(false));
     const [status, setStatus] = useState('');
-    
+    const [folderPath, setFolderPath] = useState('');
+
+    const handleFolderSelect = async () => {
+        if ('showDirectoryPicker' in window) {
+            try {
+                const folderHandle = await window.showDirectoryPicker();
+                // Lưu trữ đường dẫn thư mục
+                const path = folderHandle.name; // Lấy tên thư mục
+                setFolderPath(path);
+            } catch (error) {
+                console.error('Lỗi khi chọn thư mục:', error);
+            }
+        } else {
+            alert('API không được hỗ trợ trên trình duyệt này.');
+        }
+    };
     useEffect(() => {
         const fetchTorrentData = async () => {
             const dataArr = [];
@@ -47,7 +62,8 @@ export function Post() {
     }, [torrentFiles]);
 
     const extractValues = (dataArr) => {
-        return dataArr.map(item => ({
+        return dataArr.map((item, index)=> ({
+            id: index,
             file_name: item.file_name,
             file_size: item.file_size,
             piece_size: item.piece_size,
@@ -78,9 +94,8 @@ export function Post() {
     };
 
     const handleDownload = async (index) => {
-        let torrentPath = "C:/xampp/htdocs/btl mang/Computer_Network/Node_Simple/file_server/" + extractedData[index].file_name + ".torrent";
+        let torrentPath = "D:/btl mang/Computer_Network/Peer-Peer/file_server/" + extractedData[index].file_name + ".torrent";
     
-        console.log(extractedData[index].file_name + ".torrent");
         setStatus('Starting download...');
         try {
             const response = await axios.post('http://127.0.0.1:5000/download', {
@@ -96,38 +111,88 @@ export function Post() {
         }
     };
 
+    function handleAction() {
+        setAction(!action);
+    }
+
+    const [input, SecrchResult, results] = Search(extractedData, checkedItems, handleCheckboxChange, handleDownload, "Download");
+
     return (
-        <form className="container mx-auto">
+        <div className="container mx-auto">
             <header className="flex"><p className="text-[70px] font-serif">List Item</p></header>
             <div>
                 <p className="bg-[#D9EDF7] py-[15px] pl-[15px] rounded-t-lg flex">List Items</p>
                 <div className="border-x-4 border-b-4 pb-[20px] px-[20px] rounded-b-lg border-[#D9EDF7]">
+                <div className="flex h-[80px] items-center relative ">
+                        <div className={`flex w-[114px] h-[40px] items-center cursor-pointer transition-transform absolute duration-700 ease-in-out ${action ? "translate-x-[115px] hover:scale-110 " : "-translate-x-[0px] "}`} >
+                            <p href="/admin/post/All" className="w-[100px] m-[10px] z-0 flex h-full justify-center items-center text-gray-900 bg-gradient-to-r from-red-200 via-red-300 to-yellow-200 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-red-100 dark:focus:ring-red-400 shadow-lg shadow-lime-500/50 dark:shadow-lg dark:shadow-lime-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">
+                                All
+                            </p>
+                        </div>
+                        <div className={`flex w-[114px] h-[40px] items-center cursor-pointer transition-transform absolute duration-700 ease-in-out ${action ? "translate-x-[230px] hover:scale-110 " : "-translate-x-[0px] "}`} >
+                            <p className="w-[100px] m-[10px] z-0 flex h-full justify-center items-center text-gray-900 bg-gradient-to-r from-lime-200 via-lime-400 to-lime-500 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-lime-300 dark:focus:ring-lime-800 shadow-lg shadow-lime-500/50 dark:shadow-lg dark:shadow-lime-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">
+                                Active
+                            </p>
+                        </div>
+                        <div className={`flex w-[114px] h-[40px] cursor-pointer items-center transition-transform absolute duration-700 ease-in-out ${action ? "translate-x-[345px] hover:scale-110 " : "-translate-x-[0px]"}`} >
+                            <p className={`w-[100px] m-[10px] z-0 flex h-full justify-center items-center text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2`}>
+                                InActive
+                            </p>
+                        </div>
+                        <div className={`flex w-[114px] h-[40px] cursor-pointer items-center transition-transform absolute duration-700 ease-in-out ${action ? "translate-x-[460px] hover:scale-110 " : "-translate-x-[0px]"} `} >
+                            <p className={`w-[100px] m-[10px] z-0 flex h-full justify-center items-center focus:outline-none text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 shadow-lg shadow-lime-500/50 dark:shadow-lg dark:shadow-lime-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2`}>
+                                Edit
+                            </p>
+                        </div>
+                        <div className={`flex w-[114px] h-[40px] cursor-pointer items-center transition-transform absolute duration-700 ease-in-out ${action ? "translate-x-[575px] hover:scale-110" : "-translate-x-[0px]"}`} >
+                            <p className={`w-[100px] m-[10px] z-0 flex h-full justify-center items-center focus:outline-none text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:bg-gradient-to-l focus:ring-4 focus:ring-purple-200 dark:focus:ring-purple-800 shadow-lg shadow-lime-500/50 dark:shadow-lg dark:shadow-lime-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2`}>
+                                Delete
+                            </p>
+                        </div>
+                        <div className={`flex w-[114px] h-[40px] cursor-pointer items-center transition-transform absolute duration-700 ease-in-out ${!action ? "translate-x-[115px] hover:scale-110" : "-translate-x-[0px]"}`} >
+                            <p className={`w-[100px] m-[10px] z-0 flex h-full justify-center items-center focus:outline-none text-white bg-gradient-to-r from-pink-400 via-pink-500 to-pink-600 hover:bg-gradient-to-br focus:ring-4 focus:ring-pink-300 dark:focus:ring-pink-800 shadow-lg shadow-pink-500/50 dark:shadow-lg dark:shadow-pink-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2`}>
+                                Apply
+                            </p>
+                        </div>
+                        <div className={`hover:scale-110 m-[10px] h-[42px]  w-[100px] flex relative cursor-pointer items-center justify-center  ${Use === "Bulk Action" && "text-white bg-gradient-to-r from-purple-500 via-purple-600 to-purple-700 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-purple-300 dark:focus:ring-purple-800 shadow-lg shadow-purple-500/50 dark:shadow-lg dark:shadow-purple-800/80 font-medium rounded-lg text-sm  text-center "}
+                                                                                                                                            ${Use === "Active" && "text-gray-900 bg-gradient-to-r from-lime-200 via-lime-400 to-lime-500 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-lime-300 dark:focus:ring-lime-800 shadow-lg shadow-lime-500/50 dark:shadow-lg dark:shadow-lime-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"}
+                                                                                                                                            ${Use === "InActive" && "text-white bg-gradient-to-r from-red-400 via-red-500 to-red-600 hover:bg-gradient-to-br focus:ring-4 focus:outline-none focus:ring-red-300 dark:focus:ring-red-800 shadow-lg shadow-red-500/50 dark:shadow-lg dark:shadow-red-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"}
+                                                                                                                                            ${Use === "Edit" && "text-white bg-gradient-to-br from-purple-600 to-blue-500 hover:bg-gradient-to-bl focus:ring-4 focus:ring-blue-300 dark:focus:ring-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"}
+                                                                                                                                            ${Use === "Delete" && "text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:bg-gradient-to-l focus:ring-4 focus:ring-purple-200 dark:focus:ring-purple-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"}
+                                                                                                                                            ${Use === "All" && "text-gray-900 bg-gradient-to-r from-red-200 via-red-300 to-yellow-200 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-red-100 dark:focus:ring-red-400 shadow-lg shadow-lime-500/50 dark:shadow-lg dark:shadow-lime-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2"}
+                        `} onClick={handleAction}>
+                            <p>{Use}</p>
+                        </div>
+                        <div
+                            className={`w-[1000px] items-center justify-center flex transition-opacity duration-300 ease-in-out ${
+                                !action ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                            }`}
+                            >
+                        {input}
+                        </div>
+                    </div>
                     <ul className="flex py-[20px] text-[20px] shadow-lg border rounded-t-lg ">
-                        <li className="w-[2%] px-[2%]"><input type="checkbox" className="size-4 cursor-pointer" onClick={() => handleCheckAll()} /></li>
-                        <li className="w-[30%] px-[2%]">Name</li>
+                        <li className="w-[2%] pl-[2%]"><input type="checkbox" className="size-4 cursor-pointer" onClick={() => handleCheckAll()} /></li>
+                        <li className="w-[25%]">Name</li>
                         <li className="w-[10%]">File Size</li>
                         <li className="w-[10%]">Piece Size</li>
                         <li className="w-[12%] px-[2%]">Piece Count</li>
-                        <li className="w-[10%] px-[2%]">File Hash</li>
-                        <li className="w-[10%] pl-[20%]">Status</li>
+                        <li className="w-[30%] px-[2%]">File Hash</li>
+                        <li className="w-[10%]">Action</li>
                     </ul>
 
-                    {extractedData.map((element, index) => (
-                        <ul key={index} className="flex py-[10px] text-[18px] border-b">
-                            <li className="w-[2%] px-[2%]"><input type="checkbox" className="size-4 cursor-pointer" checked={checkedItems[index]} onClick={() => handleCheckboxChange(index)} /></li>
-                            <li className="w-[30%] px-[2%]">{element.file_name}</li>
-                            <li className="w-[10%]">{element.file_size}</li>
-                            <li className="w-[10%] px-[2%]">{element.piece_size}</li>
-                            <li className="w-[12%] px-[2%]">{element.piece_count}</li>
-                            <li className="w-[10%] px-[2%]">{element.file_hash}</li>
-                            <li className="checkbox-wrapper-8 w-[8%] ml-[18%] cursor-pointer rounded-lg flex items-center justify-center" onClick={() => handleDownload(index)}>
-                                Download
-                            </li>
-                        </ul>
-                    ))}
+                    {results.length > 0 ? SecrchResult : 
+                        <PaginationHelper
+                            data={extractedData}
+                            checkedItems={checkedItems}
+                            handleCheckboxChange={handleCheckboxChange}
+                            handleDownload={handleDownload}
+                            Action="Download"
+                        />
+                    }
                 </div>
             </div>
-            {status && <div className="status-message">{status}</div>} {/* Hiển thị trạng thái tải xuống */}
-        </form>
+            {status && <div className="status-message">{status}</div>} 
+        </div>
     );
 }

@@ -12,11 +12,10 @@ def choose_torrent_file(root_path):
     root.destroy()
     return file_path
 
-def choose_save_dir(root_path):
+def choose_save_dir():
     root = tk.Tk()
     root.withdraw()
     folder_path = filedialog.askdirectory(
-        initialdir=root_path,
         title="Select folder to save file"
     )
     root.destroy()

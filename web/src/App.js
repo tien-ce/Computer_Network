@@ -13,7 +13,6 @@ export function App() {
     <div className="App">
       <BrowserRouter>
         <Routes>
-          <Route index element={<Home />} />  
           <Route path="admin/*" element={<Admin />} />
         </Routes>
       </BrowserRouter>

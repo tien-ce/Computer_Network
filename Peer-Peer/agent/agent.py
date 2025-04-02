@@ -2,33 +2,31 @@ import os
 import sys
 import time
 import threading
-#---------------------- Đây là phần add các path để import------------------------------------#
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import json
+#---------------------- Add paths for importing ------------------------------------#
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-PROJECT_ROOT = os.path.join(BASE_DIR, "..")  # thư mục  cha
+PROJECT_ROOT = os.path.join(BASE_DIR, "..")  # Parent directory
 sys.path.append(PROJECT_ROOT)
 sys.path.append(BASE_DIR)
-#-------------------------------------------------------------------------------------------------#
-
+#----------------------------------------------------------------------------------#
 
 from peer_server.peer_server import start_upload_server
-# Ta cũng có sẵn hai hàm dưới đây:
-# - choose_torrent_file: cho người dùng duyệt chọn file
-# - parse_torrent_file: đọc file .torrent lấy thông tin
 from peer_client.peer_client import start_download_from_torrent
-from peer_shared.choose_file_ui import choose_torrent_file,choose_save_dir,get_user_command,get_port
+from peer_shared.choose_file_ui import choose_torrent_file, choose_save_dir, get_user_command, get_port
 from parse_torrent import parse_torrent_file
-torrent_path = None
 
+torrent_path = None
 enter_event = threading.Event()
 
-def wait_for_enter():
-    """
-    Luồng phụ: chờ người dùng nhấn Enter, sau đó set event.
-    Dùng input() để đảm bảo tương thích tốt với mọi môi trường.
-    """
-    while True:
-        _ = input()  # Chờ người dùng nhấn Enter
-        enter_event.set()
+app = Flask(__name__)
+CORS(app)
+
+@app.route('/')
+def index():
+    """Serve the main HTML file."""
+    return app.send_static_file('index.html')
 
 def run_agent():
     print("Agent started. Possible commands:")
@@ -36,60 +34,56 @@ def run_agent():
     print("  exit           (to exit the program)")
     print("  downloadfile   (to choose a .torrent file and download it)")
     print()
-    command = None
-    threading.Thread(target=wait_for_enter, daemon=True).start()
-    while True:
-        # Chờ Enter được nhấn
-        print("Waiting for Enter to continue...")
-        enter_event.wait()
-        enter_event.clear()  # Đặt lại trạng thái cho lần Enter tiếp theo
-        command = get_user_command()
-        if not command:
-            print("No command entered. Exiting.")
-            break
-        command = command.strip()
-        if command == "uploadfile":
-            # Gọi giao diện chọn file
-            torrent_path = choose_torrent_file(PROJECT_ROOT)
-            if not torrent_path:
-                print("No .torrent file was selected.")
-                continue
-            # Đọc thông tin từ file .torrent
-            try:
-                meta = parse_torrent_file(torrent_path)
-            except Exception as e:
-                print("Error reading torrent file:", e)
-                continue
+    threading.Thread(target=enter_event.set, daemon=True).start()
 
-            # Lấy ra các thông số cần thiết
-            file_hash = meta["file_hash"]
-            file_name = meta["file_name"]
-            piece_count = meta["piece_count"]
-            piece_size = meta["piece_size"]
+@app.route('/input', methods=['POST'])
+def upload_file():
+    """Handle uploading a torrent file and sharing it."""
+    torrent_path = request.json.get('torrent_path')
+    
+    print(torrent_path)
+    
+    if not torrent_path:
+        return jsonify({"error": "No .torrent file was selected."}), 400
+    
+    # Read information from the .torrent file
+    try:
+        meta = parse_torrent_file(torrent_path)
+    except Exception as e:
+        return jsonify({"error": f"Error reading torrent file: {e}"}), 400
 
-            if not file_name:
-                print("not file name")
-                return
-            # file gốc nằm trong thư mục file_server (Đang fix cố định dựa vào file name)
-            file_path = os.path.join(PROJECT_ROOT, "file_server", file_name)
-            time.sleep(0.1)
-            port_str = get_port()
-            if not port_str or not port_str.isdigit():
-                print("Invalid port input.")
-                exit()
-            upload_port = int(port_str)
-            start_upload_server(file_hash,file_path,piece_count,piece_size,upload_port)
-            # upload_port = 5000
-            # Gọi hàm khởi động server chia sẻ
+    file_hash = meta["file_hash"]
+    file_name = meta["file_name"]
+    piece_count = meta["piece_count"]
+    piece_size = meta["piece_size"]
 
-        elif command == "downloadfile":
-            torrent_client_path = choose_torrent_file(PROJECT_ROOT)
-            save_dir = choose_save_dir(PROJECT_ROOT)
-            start_download_from_torrent(torrent_client_path,save_dir)
-        elif command == "exit":
-            print("Shutting down agent...")
-            break
-        else:
-            print("Invalid command. Please type 'uploadfile' or 'exit'.")
+    if not file_name:
+        return jsonify({"error": "No file name found in torrent metadata."}), 400
+
+    # Original file resides in the 'file_server' directory
+    file_path = os.path.join(PROJECT_ROOT, "file_server", file_name)
+    port_str = get_port()
+
+    if not port_str or not port_str.isdigit():
+        return jsonify({"error": "Invalid port input."}), 400
+
+    upload_port = int(port_str)
+    start_upload_server(file_hash, file_path, piece_count, piece_size, upload_port)
+
+    return jsonify({"message": "Upload server started."}), 200
+
+@app.route('/download', methods=['POST'])
+def download_file():
+    """Download and merge pieces from a torrent file specified in the request."""
+    torrent_path = request.json.get('torrent_path')
+    print(PROJECT_ROOT)
+    if not torrent_path or not os.path.exists(torrent_path):
+        return jsonify({"error": "The specified torrent file does not exist."}), 400
+
+    # save_dir = choose_save_dir(PROJECT_ROOT)
+    start_download_from_torrent(torrent_path, "D:/btl mang/Computer_Network/Peer-Peer/file_client")
+
+    return jsonify({"message": "Download started."}), 200
+
 if __name__ == "__main__":
-    run_agent()
+    app.run(debug=True)
