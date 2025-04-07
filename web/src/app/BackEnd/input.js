@@ -79,12 +79,10 @@ export function Input() {
     };
 
     const handleDownload = async (index) => {
-        let torrentPath = "D:/btl mang/Computer_Network/Peer-Peer/file_server/" + extractedData[index].file_name + ".torrent";
+        // let torrentPath = "D:/btl mang/Computer_Network/Peer-Peer/file_server/" + extractedData[index].file_name + ".torrent";
         setStatus('Starting Upload...');
         try {
-            const response = await axios.post('http://127.0.0.1:5000/input', {
-                torrent_path: torrentPath,
-            });
+            const response = await axios.post('http://127.0.0.1:5000/input');
             setStatus(response.data.message);
         } catch (error) {
             if (error.response) {

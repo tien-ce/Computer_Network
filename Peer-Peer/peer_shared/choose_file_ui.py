@@ -1,25 +1,39 @@
 import tkinter as tk
 from tkinter import filedialog 
+import easygui
+import easygui
+import tkinter as tk
+import os
 
-def choose_torrent_file(root_path):
+def choose_torrent_file(default_path="."):
+    # Tạo root để hiện icon dưới taskbar
     root = tk.Tk()
-    root.withdraw()  # Ẩn cửa sổ chính
-    file_path = filedialog.askopenfilename(
-        initialdir=root_path,
-        title="Select a .torrent file",
-        filetypes=(("Torrent files", "*.torrent"), ("All files", "*.*"))
+    root.iconify()  # thu nhỏ nhưng giúp hệ điều hành hiện icon
+
+    file_path = easygui.fileopenbox(
+        msg="Chọn file .torrent",
+        title="Chọn torrent",
+        default=os.path.join(default_path, "*.torrent"),
+        filetypes=["*.torrent"]
     )
+
     root.destroy()
     return file_path
 
-def choose_save_dir():
+
+def choose_save_dir(default_path="."):
     root = tk.Tk()
-    root.withdraw()
-    folder_path = filedialog.askdirectory(
-        title="Select folder to save file"
+    root.iconify()
+
+    folder_path = easygui.diropenbox(
+        msg="Chọn thư mục để lưu file",
+        title="Chọn thư mục",
+        default=default_path
     )
+
     root.destroy()
     return folder_path
+
 def get_user_command():
     command_holder = {"value": None}
 
