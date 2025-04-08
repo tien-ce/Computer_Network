@@ -11,6 +11,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/scrollbar';
 import axios from 'axios';
+import path from 'path-browserify';
 
 export function Input() {
     const [torrentDataArray, setTorrentDataArray] = useState([]);
@@ -79,10 +80,12 @@ export function Input() {
     };
 
     const handleDownload = async (index) => {
-        // let torrentPath = "D:/btl mang/Computer_Network/Peer-Peer/file_server/" + extractedData[index].file_name + ".torrent";
+        let torrentPath = path.join('..', 'file_server', extractedData[index].file_name + ".torrent");
         setStatus('Starting Upload...');
         try {
-            const response = await axios.post('http://127.0.0.1:5000/input');
+            const response = await axios.post('http://127.0.0.1:5000/input', {
+                torrent_path: torrentPath,
+            });
             setStatus(response.data.message);
         } catch (error) {
             if (error.response) {

@@ -11,6 +11,7 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import 'swiper/css/scrollbar';
 import axios from 'axios';
+import path from 'path-browserify';
 
 export function Post() {
     const [torrentDataArray, setTorrentDataArray] = useState([]);
@@ -20,7 +21,7 @@ export function Post() {
     const [Use, setUse] = useState("Bulk Action");
     const [allChecked, setAllChecked] = useState(false);
     const importAll = (r) => r.keys().map(r);
-    const torrentFiles = importAll(require.context('./../../../../Peer-Peer/file_server', true, /\.(torrent)$/));
+    const torrentFiles = importAll(require.context('./../../../../Peer-Peer/file_client', true, /\.(torrent)$/));
     const [checkedItems, setCheckedItems] = useState(Array(torrentFiles.length).fill(false));
     const [status, setStatus] = useState('');
     const [folderPath, setFolderPath] = useState('');
@@ -29,7 +30,6 @@ export function Post() {
         if ('showDirectoryPicker' in window) {
             try {
                 const folderHandle = await window.showDirectoryPicker();
-                // Lưu trữ đường dẫn thư mục
                 const path = folderHandle.name; // Lấy tên thư mục
                 setFolderPath(path);
             } catch (error) {
@@ -93,13 +93,18 @@ export function Post() {
         return segments.pop();
     };
 
+
+
     const handleDownload = async (index) => {
-        let torrentPath = "D:/btl mang/Computer_Network/Peer-Peer/file_server/" + extractedData[index].file_name + ".torrent";
+        let torrentPath = path.join('..', 'file_client', extractedData[index].file_name + ".torrent");
+        let Path = path.join('..', 'file_client');
+        console.log(torrentPath, Path);
     
         setStatus('Starting download...');
         try {
             const response = await axios.post('http://127.0.0.1:5000/download', {
                 torrent_path: torrentPath,
+                Path:Path,
             });
             setStatus(response.data.message);
         } catch (error) {
@@ -110,6 +115,7 @@ export function Post() {
             }
         }
     };
+    
 
     function handleAction() {
         setAction(!action);

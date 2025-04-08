@@ -148,7 +148,9 @@ const PaginationHelper = ({ data = [], checkedItems, handleCheckboxChange, handl
                         <li className="w-[2%] pl-[2%]">
                             {element.file_name &&  <input type="checkbox" className="size-4 cursor-pointer" checked={checkedItems[index]} onClick={() => handleCheckboxChange(index)} />} 
                         </li>
-                        <li className="w-[25%]">{element.file_name || ''}</li>
+                        <li className="w-[25%]">
+                            {element.file_name ? `${element.file_name}.torrent` : ''}
+                        </li>
                         <li className="w-[10%]">{element.file_size || ''}</li>
                         <li className="w-[10%]">{element.piece_size || ''}</li>
                         <li className="w-[12%] px-[2%]">{element.piece_count || ''}</li>

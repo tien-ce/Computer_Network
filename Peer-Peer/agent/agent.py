@@ -39,9 +39,7 @@ def run_agent():
 @app.route('/input', methods=['POST'])
 def upload_file():
     """Handle uploading a torrent file and sharing it."""
-    # torrent_path = request.json.get('torrent_path')
-    torrent_path = choose_torrent_file(PROJECT_ROOT)
-    print(torrent_path)
+    torrent_path = request.json.get('torrent_path')
     
     if not torrent_path:
         return jsonify({"error": "No .torrent file was selected."}), 400
@@ -75,14 +73,15 @@ def upload_file():
 @app.route('/download', methods=['POST'])
 def download_file():
     """Download and merge pieces from a torrent file specified in the request."""
-    # torrent_path = request.json.get('torrent_path')
-    # print(PROJECT_ROOT)
-    torrent_path = choose_torrent_file(PROJECT_ROOT)
+    torrent_path = request.json.get('torrent_path')
+    Path = request.json.get('Path')
+    print(PROJECT_ROOT)
     if not torrent_path or not os.path.exists(torrent_path):
         return jsonify({"error": "The specified torrent file does not exist."}), 400
 
-    save_dir = choose_save_dir(PROJECT_ROOT)
-    start_download_from_torrent(torrent_path, save_dir)
+    # save_dir = choose_save_dir(PROJECT_ROOT)
+    start_download_from_torrent(torrent_path, Path)
+
     return jsonify({"message": "Download started."}), 200
 
 if __name__ == "__main__":
