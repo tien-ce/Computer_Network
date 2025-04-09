@@ -4,7 +4,6 @@ import time
 import threading
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-import json
 #---------------------- Add paths for importing ------------------------------------#
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.join(BASE_DIR, "..")  # Parent directory
@@ -16,7 +15,7 @@ from peer_server.peer_server import start_upload_server
 from peer_client.peer_client import start_download_from_torrent
 from peer_shared.choose_file_ui import choose_torrent_file, choose_save_dir, get_user_command, get_port
 from parse_torrent import parse_torrent_file
-
+from peer_shared.Info_shared import PIECE_SIZE,TRACKER_IP,TRACKER_PORT
 torrent_path = None
 enter_event = threading.Event()
 
@@ -39,18 +38,16 @@ def run_agent():
 @app.route('/input', methods=['POST'])
 def upload_file():
     """
-    Nhận vào tên file gốc (file_path), tự tìm file .torrent tương ứng,
     chia file nếu chưa có, rồi khởi động upload server.
     """
     from peer_server.split_file import split_file  # Hàm chia file thành .partX
     file_name = request.json.get('file_path')  # Ví dụ: "Alice_in_wonderland.txt"
-
     if not file_name:
         return jsonify({"error": "No file was selected."}), 400
 
     # Xác định đường dẫn file torrent tương ứng
-    torrent_filename = file_name + ".torrent"
-    torrent_path = os.path.join(PROJECT_ROOT, "file_server", torrent_filename)
+    file_path = os.path.join(PROJECT_ROOT, "file_server", file_name)
+    torrent_path = file_path + ".torrent"
     print(f"[DEBUG][UPLOAD] Reading torrent file at: {torrent_path}")
 
     # Đọc metadata từ file .torrent
@@ -84,7 +81,7 @@ def upload_file():
     upload_port = int(port_str)
 
     # Khởi động upload server (sẽ announce tracker + chia sẻ)
-    return start_upload_server(file_hash, file_path, piece_count, piece_size, upload_port)
+    return start_upload_server(file_hash, file_path, piece_count, piece_size, upload_port,TRACKER_IP,TRACKER_PORT)
 
 
 @app.route('/download', methods=['POST'])
@@ -125,7 +122,7 @@ def download_file():
     except Exception as e:
         return jsonify({"error": f"Download failed: {str(e)}"}), 500
 
-    return jsonify({"message": "Download started."}), 200
+    return jsonify({"message": "Download Completed."}), 200
 
 if __name__ == "__main__":
     app.run(debug=True)

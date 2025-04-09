@@ -3,7 +3,7 @@ from peer_shared.Info_shared import TRACKER_IP,TRACKER_PORT,PIECE_SIZE
 import threading
 import os
 from flask import jsonify
-def start_upload_server(file_hash, file_path, piece_count, piece_size, upload_port):
+def start_upload_server(file_hash, file_path, piece_count, piece_size, upload_port,tracker_ip = TRACKER_IP,tracker_port = TRACKER_PORT):
     """
     Khởi động server chia sẻ file (seeder) và gửi thông báo completed tới tracker.
 
@@ -26,7 +26,9 @@ def start_upload_server(file_hash, file_path, piece_count, piece_size, upload_po
         event="completed",
         uploaded=0,
         downloaded=total_size,
-        left=0
+        left=0,
+        tracker_ip= tracker_ip,
+        tracker_port= tracker_port
     )
 
     # Bước 2: Kiểm tra phản hồi trước khi khởi động peer server

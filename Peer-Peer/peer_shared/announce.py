@@ -3,7 +3,7 @@ import urllib.parse
 import uuid
 import json
 from peer_shared.Info_shared import TRACKER_IP,TRACKER_PORT,PIECE_SIZE
-def announce(info_hash,peer_id, port, event="started", uploaded=0, downloaded=0, left=None):
+def announce(info_hash,peer_id, port, event="started", uploaded=0, downloaded=0, left=None,tracker_ip = TRACKER_IP,tracker_port = TRACKER_PORT):
     """
     Gửi HTTP GET request đến tracker để thông báo trạng thái của peer và nhận danh sách peer khác.
 
@@ -43,14 +43,14 @@ def announce(info_hash,peer_id, port, event="started", uploaded=0, downloaded=0,
         # Tạo HTTP GET request theo đúng định dạng
         request = (
             f"GET /announce?{query_params} HTTP/1.1\r\n"
-            f"Host: {TRACKER_IP}:{TRACKER_PORT}\r\n"
+            f"Host: {tracker_ip}:{tracker_port}\r\n"
             f"Connection: close\r\n"
             f"\r\n"
         )
 
         # Tạo kết nối TCP tới tracker
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect((TRACKER_IP, TRACKER_PORT))
+            s.connect((tracker_ip, tracker_port))
             s.sendall(request.encode())
 
             # Nhận toàn bộ phản hồi từ tracker
