@@ -8,6 +8,12 @@ from peer_shared.Info_shared import TRACKER_IP, TRACKER_PORT
 from peer_client.get_peers import get_peers
 import sys
 
+def show_progress_bar(current, total, bar_length=30):
+    percent = float(current) / total
+    arrow = '#' * int(round(percent * bar_length))
+    spaces = '-' * (bar_length - len(arrow))
+    sys.stdout.write(f"\r[{arrow}{spaces}] {int(percent * 100)}% downloaded...")
+    sys.stdout.flush()
 def start_download_from_torrent(TORRENT_PATH,SAVE_DIR):
     if not TORRENT_PATH or not SAVE_DIR:
         print("Not path file, please choose again")
@@ -32,18 +38,30 @@ def start_download_from_torrent(TORRENT_PATH,SAVE_DIR):
 
         # Bước 3 : Tải các part nếu có peer_server đang chứa
         complete = True
+        downloaded_parts = 0
         for i in range(piece_count):
             if os.path.exists(f"{save_path}.part{i}"):
-                continue  # Nếu đã có mảnh thì bỏ qua
-            peer_list = piece_to_peer.get(i, [])  # Danh sách các peer chứa part thứ i
+                downloaded_parts += 1
+                continue
+
+            peer_list = piece_to_peer.get(i, [])
             if not peer_list:
-                print(f"[!] No peer has part {i}, skipping.")
                 complete = False
                 continue
-            peer_ip, peer_port = peer_list[0]  # Chọn peer đầu tiên trong danh sách
-            request_piece(peer_ip=peer_ip, peer_port=peer_port, file_path=save_path,
-                           index=i,file_hash=file_hash,peer_id=None,piece_size=piece_size,total_pieces=piece_count)
 
+            peer_ip, peer_port = peer_list[0]
+            request_piece(
+                peer_ip=peer_ip,
+                peer_port=peer_port,
+                file_path=save_path,
+                index=i,
+                file_hash=file_hash,
+                peer_id=None,
+                piece_size=piece_size,
+                total_pieces=piece_count
+            )
+            show_progress_bar(downloaded_parts, piece_count)
+            time.sleep(0.2)  # Cho dễ thấy tiến độ (có thể bỏ đi)
         time.sleep(3)  # Tránh gọi liên tục
 
     # Bước 4 : Ghép file

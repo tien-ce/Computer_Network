@@ -37,12 +37,12 @@ def start_upload_server(file_hash, file_path, piece_count, piece_size, upload_po
         return jsonify({"error": f"Failed to announce to tracker: {status['error']}"}), 500
 
     # Bước 3: Khởi động server chia sẻ file
-    threading.Thread(
-        target=start_peer_server,
-        args=(upload_port, file_path, piece_count, piece_size),
-        daemon=True
-    ).start()
-
+    # threading.Thread(
+    #     target=start_peer_server,
+    #     args=(upload_port, file_path, piece_count, piece_size),
+    #     daemon=True
+    # ).start()
+    start_peer_server(upload_port,file_path,piece_count,piece_size)
     return jsonify({"message": "Upload server started after successful tracker announce."}), 200
 
 

@@ -22,6 +22,8 @@ def get_peers(file_hash, tracker_ip, tracker_port, peer_id=None):
         uploaded=0,
         downloaded=0,
         left=1048576,  # hoặc kích thước file thực tế
+        tracker_ip= tracker_ip,
+        tracker_port=tracker_port
     )
 
     peers = response.get("peers", [])

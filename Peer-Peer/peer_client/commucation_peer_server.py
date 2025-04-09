@@ -62,7 +62,7 @@ def get_bitfields(peers, total_parts, timeout=3):
                 print(f"Received bitfield from {ip}:{port}: {bitfield}")
 
         except Exception as e:
-            print(f"[!] Failed to get bitfield from {ip}:{port} → {e}")
+            raise Exception("Failed to connect to peer")
 
     return bitfields
 

@@ -100,8 +100,8 @@ def download_file():
         return jsonify({"error": "Missing torrent filename or save path."}), 400
 
     # Tạo đường dẫn tuyệt đối
-    torrent_path = os.path.join(PROJECT_ROOT, "file_client", torrent_filename)
-    save_dir = os.path.join(PROJECT_ROOT, save_dir_name)
+    torrent_path = os.path.join(BASE_DIR, "../file_client", torrent_filename)
+    save_dir = os.path.join(BASE_DIR, save_dir_name)
 
     print(f"[DEBUG] Torrent path: {torrent_path}")
     print(f"[DEBUG] Save directory: {save_dir}")
