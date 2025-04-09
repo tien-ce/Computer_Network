@@ -2,7 +2,7 @@ import threading
 from peer_shared.Info_shared import TRACKER_IP,TRACKER_PORT,PIECE_SIZE
 import threading
 import os
-
+from flask import jsonify
 def start_upload_server(file_hash, file_path, piece_count, piece_size, upload_port):
     """
     Khởi động server chia sẻ file (seeder) và gửi thông báo completed tới tracker.
@@ -16,17 +16,12 @@ def start_upload_server(file_hash, file_path, piece_count, piece_size, upload_po
     """
     from peer_shared.announce import announce
     from peer_server.start_and_handle_request import start_peer_server
-    from peer_server.split_file import split_file
-    # Bước 1 Split file và tạo file torrent (nên chạy riêng không trùng với các bước khác)
-    split_file(file_path,piece_size)
-    print ("Split success")
-    # Bước 2 : Đăng ký với tracker
-    # Tính kích thước file để gửi thông tin đầy đủ cho tracker
+
+    # Bước 1: Gửi thông báo tới tracker
     total_size = os.path.getsize(file_path)
-    # Gửi thông báo tới tracker: peer này đã hoàn thành file, trở thành seeder
-    announce(
+    status = announce(
         info_hash=file_hash,
-        peer_id= None,
+        peer_id=None,
         port=upload_port,
         event="completed",
         uploaded=0,
@@ -34,13 +29,18 @@ def start_upload_server(file_hash, file_path, piece_count, piece_size, upload_po
         left=0
     )
 
-    print(f"Announced to tracker: file_hash={file_hash}, port={upload_port}, event=completed")
-    #Bước 3 : Khởi động server đợi client kết nối
-    # Khởi động server chia sẻ file
+    # Bước 2: Kiểm tra phản hồi trước khi khởi động peer server
+    if status.get("error"):
+        print(f"[ERROR] Tracker announce failed: {status['error']}")
+        return jsonify({"error": f"Failed to announce to tracker: {status['error']}"}), 500
+
+    # Bước 3: Khởi động server chia sẻ file
     threading.Thread(
         target=start_peer_server,
         args=(upload_port, file_path, piece_count, piece_size),
         daemon=True
     ).start()
 
-    print(f"Peer server started on port {upload_port} sharing file at {file_path}")
+    return jsonify({"message": "Upload server started after successful tracker announce."}), 200
+
+

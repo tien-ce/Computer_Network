@@ -12,7 +12,6 @@ import 'swiper/css/pagination';
 import 'swiper/css/scrollbar';
 import axios from 'axios';
 import path from 'path-browserify';
-
 export function Input() {
     const [torrentDataArray, setTorrentDataArray] = useState([]);
     const [extractedData, setExtractedData] = useState([]);
@@ -22,6 +21,7 @@ export function Input() {
     const [allChecked, setAllChecked] = useState(false);
     const importAll = (r) => r.keys().map(r);
     const torrentFiles = importAll(require.context('./../../../../Peer-Peer/file_server', true, /\.(torrent)$/));
+    // Dành cho phần Upload — chỉ lấy file gốc (không .torrent, không .partX)
     const [checkedItems, setCheckedItems] = useState(Array(torrentFiles.length).fill(false));
     const [status, setStatus] = useState('');
     
@@ -78,13 +78,20 @@ export function Input() {
         const segments = path.split('/'); 
         return segments.pop();
     };
-
     const handleDownload = async (index) => {
-        let torrentPath = path.join('..', 'file_server', extractedData[index].file_name + ".torrent");
-        setStatus('Starting Upload...');
+        const filePath = extractedData[index].file_name; // Đường dẫn tới file gốc
+    
+        // Bỏ qua nếu là .torrent hoặc .partX
+        if (filePath.endsWith('.torrent') || filePath.includes('.part')) {
+            setStatus('Cannot upload .torrent or part files.');
+            return;
+        }
+    
+        setStatus('Starting upload...');
+    
         try {
             const response = await axios.post('http://127.0.0.1:5000/input', {
-                torrent_path: torrentPath,
+                file_path: filePath
             });
             setStatus(response.data.message);
         } catch (error) {
@@ -95,6 +102,7 @@ export function Input() {
             }
         }
     };
+    
 
     function handleAction() {
         setAction(!action);
