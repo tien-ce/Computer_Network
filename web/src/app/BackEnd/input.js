@@ -20,7 +20,7 @@ export function Input() {
     const [Use, setUse] = useState("Bulk Action");
     const [allChecked, setAllChecked] = useState(false);
     const importAll = (r) => r.keys().map(r);
-    const torrentFiles = importAll(require.context('./../../../../Peer-Peer/file_server', true, /\.(torrent)$/));
+    const torrentFiles = importAll(require.context('./../../../../Peer-Peer/file_server', true, /^(?!.*\.(part|torrent)$).*/));
     // Dành cho phần Upload — chỉ lấy file gốc (không .torrent, không .partX)
     const [checkedItems, setCheckedItems] = useState(Array(torrentFiles.length).fill(false));
     const [status, setStatus] = useState('');
@@ -30,12 +30,17 @@ export function Input() {
             const dataArr = [];
             for (const torrentFile of torrentFiles) {
                 try {
-                    const response = await fetch(torrentFile);
-                    if (!response.ok) throw new Error('Network response was not ok');
-                    const data = await response.json();
-                    dataArr.push(data);
+                    // Lấy tên file từ đường dẫn
+                    let fileName = torrentFile.split("/").pop();
+                    
+                    
+                    if (!fileName.includes("part")) {
+                        let temp = fileName.split(".");
+                        fileName = fileName.replace("." + temp[temp.length - 2],"");
+                        dataArr.push({ file_name: fileName }); // Thêm đối tượng chứa tên file vào mảng
+                    }
                 } catch (err) {
-                    console.error('Error fetching file:', err);
+                    console.error('Error processing file:', err);
                     setError('Error fetching file data');
                 }
             }
@@ -48,13 +53,9 @@ export function Input() {
     }, [torrentFiles]);
 
     const extractValues = (dataArr) => {
-        return dataArr.map((item, index)=> ({
+        return dataArr.map((item, index) => ({
             id: index,
             file_name: item.file_name,
-            file_size: item.file_size,
-            piece_size: item.piece_size,
-            piece_count: item.piece_count,
-            file_hash: item.file_hash,
         }));
     };
 
@@ -81,7 +82,6 @@ export function Input() {
     const handleDownload = async (index) => {
         const filePath = extractedData[index].file_name; // Đường dẫn tới file gốc
     
-        // Bỏ qua nếu là .torrent hoặc .partX
         if (filePath.endsWith('.torrent') || filePath.includes('.part')) {
             setStatus('Cannot upload .torrent or part files.');
             return;

@@ -115,16 +115,6 @@ export function Search(item, checkedItems, handleCheckboxChange, handleDownload,
         switch (category) {
             case "Tìm theo tên":
                 return "file_name";
-            case "Tìm theo File Size":
-                return "file_size";
-            case "Tìm theo Piece Size":
-                return "piece_size";
-            case "Tìm theo Piece Count":
-                return "piece_count";
-            case "Tìm theo File Hash":
-                return "file_hash";
-            default:
-                return null;
         }
     };
 
@@ -136,10 +126,6 @@ export function Search(item, checkedItems, handleCheckboxChange, handleDownload,
 
     const categories = [
         "Tìm theo tên",
-        "Tìm theo File Size",
-        "Tìm theo Piece Size",
-        "Tìm theo Piece Count",
-        "Tìm theo File Hash",
     ];
 
     function getHTML() {
