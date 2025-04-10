@@ -5,8 +5,12 @@ import { faList } from '@fortawesome/free-solid-svg-icons';
 import { faBars } from '@fortawesome/free-solid-svg-icons';
 import Modal from "../helper/modal";
 import React, { useState } from 'react';
+
 import "./style/style.css"
 const PaginationHelper = ({ data = [], checkedItems, handleCheckboxChange, handleDownload, Action}) => {
+    const [progressWidth, setProgressWidth] = useState(0);
+    const importAll = (r) => r.keys().map(r);
+
     const [currentPage, setCurrentPage] = useState(1);
     const pagination = {
         totalItems: data.length,
@@ -134,32 +138,64 @@ const PaginationHelper = ({ data = [], checkedItems, handleCheckboxChange, handl
     let index = (currentPage - 1) * totalItemsPerPage;
     let max_index = totalItemsPerPage;
 
-    let type;
+    const partFiles = importAll(require.context('./../../../../../Peer-Peer/file_client', false, /\.part\d+$/));
+    const partFileNames = partFiles.map(filePath => {
+        const segments = filePath.split('/');
+        const fileName = segments.pop(); 
+        const match = fileName.match(/^(.*?)(?=\.\w+)/);
+        return match ? match[0] : fileName; 
+    });
 
     function getData() {
         const itemsToRender = data.slice(index, index + max_index);
-    
         const paddedItems = [...itemsToRender, ...Array(Math.max(0, max_index - itemsToRender.length)).fill({})];
     
         return (
             <ul>
-                {paddedItems.map((element, index) => (
-                    <ul key={index} className={`flex py-[10px] h-[50px] ${index % 2 === 0 ? "bg-[#E0E3E7]" : ""} text-[18px] border-b`}>
-                        <li className="w-[2%] pl-[2%]">
-                            {element.file_name &&  <input type="checkbox" className="size-4 cursor-pointer" checked={checkedItems[index]} onClick={() => handleCheckboxChange(index)} />} 
-                        </li>
-                        <li className="w-[25%]">
-                            {element.file_name ? `${element.file_name}` : ''}
-                        </li>
-                        <li className="w-[10%]">{element.file_size || ''}</li>
-                        <li className="w-[10%]">{element.piece_size || ''}</li>
-                        <li className="w-[12%] px-[2%]">{element.piece_count || ''}</li>
-                        <li className="w-[30%] px-[2%]">{element.file_hash || ''}</li>
-                        <li className="checkbox-wrapper-8 w-[10%] cursor-pointer rounded-lg flex items-center justify-center" onClick={() => handleDownload(index)}>
-                            {element.file_name &&  Action}
-                        </li>
-                    </ul>
-                ))}
+                {paddedItems.map((element, index) => {
+                    const currentFileName = element.file_name ? element.file_name.split('.')[0] : '';
+                    const count = partFileNames.filter(fileName => fileName === currentFileName).length;
+                    const percentage = element.piece_count ? (count / element.piece_count) * 100 : 0;
+    
+                    return (
+                        <ul key={index} className={`flex py-[10px] h-[50px] ${index % 2 === 0 ? "bg-[#E0E3E7]" : ""} text-[18px] border-b`}>
+                            <li className="w-[2%] pl-[2%]">
+                                {element.file_name && (
+                                    <input
+                                        type="checkbox"
+                                        className="size-4 cursor-pointer"
+                                        checked={checkedItems[index]}
+                                        onClick={() => handleCheckboxChange(index)}
+                                    />
+                                )}
+                            </li>
+                            <li className="w-[20%]">{element.file_name || ''}</li>
+                            <li className="w-[5%]">{element.file_size || ''}</li>
+                            <li className="w-[10%]">{element.piece_size || ''}</li>
+                            <li className="w-[8%]">{element.piece_count || ''}</li>
+                            <li className="w-[30%] px-[2%] overflow-hidden">{element.file_hash || ''}</li>
+                            <li className="w-[15%]">
+                                {element.file_name && Action === "Download" && (
+                                    <div className="rounded-[1.5em] bg-black px-[5px] flex items-center h-full relative">
+                                        <div
+                                            className="rounded-[1.5em] text-[13px] h-[1.5em] bg-[#17AF91] absolute transition-all duration-500 ease-in-out"
+                                            style={{
+                                                width: `${percentage}%`,
+                                                maxWidth: 'calc(100% - 10px)',
+                                            }}
+                                            data-label="Loading..."
+                                        >
+                                            {percentage.toFixed(2)}%
+                                        </div>
+                                    </div>
+                                )}
+                            </li>
+                            <li className="checkbox-wrapper-8 w-[10%] cursor-pointer rounded-lg flex items-center justify-center" onClick={() => handleDownload(index)}>
+                                {element.file_name && Action}
+                            </li>
+                        </ul>
+                    );
+                })}
             </ul>
         );
     }

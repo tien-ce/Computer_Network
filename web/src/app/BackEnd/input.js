@@ -164,13 +164,14 @@ export function Input() {
                         {input}
                         </div>
                     </div>
-                    <ul className="flex py-[20px] text-[20px] shadow-lg border rounded-t-lg ">
-                        <li className="w-[2%] pl-[2%]"><input type="checkbox" className="size-4 cursor-pointer" onClick={() => handleCheckAll()} /></li>
-                        <li className="w-[25%]">Name</li>
-                        <li className="w-[10%]">File Size</li>
-                        <li className="w-[10%]">Piece Size</li>
-                        <li className="w-[12%] px-[2%]">Piece Count</li>
-                        <li className="w-[30%] px-[2%]">File Hash</li>
+                    <ul className="flex py-[20px] text-[20px] shadow-lg border rounded-t-lg">
+                        <li className="w-[2%] pl-[2%]"><input type="checkbox" className="size-4 cursor-pointer" onClick={handleCheckAll} /></li>
+                        <li className="w-[20%]">Name</li>
+                        <li className="w-[5%]"></li>
+                        <li className="w-[10%]"></li>
+                        <li className="w-[8%]"></li>
+                        <li className="w-[30%] px-[2%] overflow-hidden"></li>
+                        <li className="w-[15%]"></li>
                         <li className="w-[10%]">Action</li>
                     </ul>
 

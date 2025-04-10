@@ -2,7 +2,6 @@ import Modal from "../pages/helper/modal";
 import { useState, useEffect } from "react";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBars, faBook, faList } from '@fortawesome/free-solid-svg-icons';
-import $ from "jquery";
 import { useLocation } from 'react-router-dom';
 import PaginationHelper from "../pages/Admin/pagination";
 import { Search } from "./search";
@@ -12,6 +11,7 @@ import 'swiper/css/pagination';
 import 'swiper/css/scrollbar';
 import axios from 'axios';
 import path from 'path-browserify';
+import './styles.css';
 
 export function Post() {
     const [torrentDataArray, setTorrentDataArray] = useState([]);
@@ -20,25 +20,26 @@ export function Post() {
     const [action, setAction] = useState(false);
     const [Use, setUse] = useState("Bulk Action");
     const [allChecked, setAllChecked] = useState(false);
-    const importAll = (r) => r.keys().map(r);
-    const torrentFiles = importAll(require.context('./../../../../Peer-Peer/file_client', true, /\.(torrent)$/));
-    const [checkedItems, setCheckedItems] = useState(Array(torrentFiles.length).fill(false));
+    const [checkedItems, setCheckedItems] = useState([]);
     const [status, setStatus] = useState('');
     const [folderPath, setFolderPath] = useState('');
+
+    const importAll = (r) => r.keys().map(r);
+    const torrentFiles = importAll(require.context('./../../../../Peer-Peer/file_client', true, /\.(torrent)$/));
 
     const handleFolderSelect = async () => {
         if ('showDirectoryPicker' in window) {
             try {
                 const folderHandle = await window.showDirectoryPicker();
-                const path = folderHandle.name; // Lấy tên thư mục
-                setFolderPath(path);
+                setFolderPath(folderHandle.name);
             } catch (error) {
-                console.error('Lỗi khi chọn thư mục:', error);
+                console.error('Error selecting folder:', error);
             }
         } else {
-            alert('API không được hỗ trợ trên trình duyệt này.');
+            alert('API not supported in this browser.');
         }
     };
+
     useEffect(() => {
         const fetchTorrentData = async () => {
             const dataArr = [];
@@ -54,15 +55,14 @@ export function Post() {
                 }
             }
             setTorrentDataArray(dataArr);
-            const values = extractValues(dataArr);
-            setExtractedData(values);
+            setExtractedData(extractValues(dataArr));
         };
 
         fetchTorrentData();
     }, [torrentFiles]);
 
     const extractValues = (dataArr) => {
-        return dataArr.map((item, index)=> ({
+        return dataArr.map((item, index) => ({
             id: index,
             file_name: item.file_name,
             file_size: item.file_size,
@@ -87,39 +87,28 @@ export function Post() {
         setCheckedItems(newCheckedItems);
         setAllChecked(!allChecked);
     };
-
-    const getFileNameFromPath = (path) => {
-        const segments = path.split('/'); 
-        return segments.pop();
-    };
-
-
-
+    
     const handleDownload = async (index) => {
-        let torrentPath = path.join('..', 'file_client', extractedData[index].file_name + ".torrent");
-        let Path = path.join('..', 'file_client');
-        console.log(torrentPath, Path);
+        const torrentPath = path.join('..', 'file_client', `${extractedData[index].file_name}.torrent`);
+        const Path = path.join('..', 'file_client');
     
         setStatus('Starting download...');
+
         try {
             const response = await axios.post('http://127.0.0.1:5000/download', {
                 torrent_path: torrentPath,
-                Path:Path,
+                Path: Path,
             });
+    
             setStatus(response.data.message);
         } catch (error) {
-            if (error.response) {
-                setStatus(error.response.data.error);
-            } else {
-                setStatus('Error: ' + error.message);
-            }
+            setStatus(error.response ? error.response.data.error : 'Error: ' + error.message);
         }
     };
-    
 
-    function handleAction() {
+    const handleAction = () => {
         setAction(!action);
-    }
+    };
 
     const [input, SecrchResult, results] = Search(extractedData, checkedItems, handleCheckboxChange, handleDownload, "Download");
 
@@ -129,8 +118,8 @@ export function Post() {
             <div>
                 <p className="bg-[#D9EDF7] py-[15px] pl-[15px] rounded-t-lg flex">List Items</p>
                 <div className="border-x-4 border-b-4 pb-[20px] px-[20px] rounded-b-lg border-[#D9EDF7]">
-                <div className="flex h-[80px] items-center relative ">
-                        <div className={`flex w-[114px] h-[40px] items-center cursor-pointer transition-transform absolute duration-700 ease-in-out ${action ? "translate-x-[115px] hover:scale-110 " : "-translate-x-[0px] "}`} >
+                    <div className="flex h-[80px] items-center relative">
+                    <div className={`flex w-[114px] h-[40px] items-center cursor-pointer transition-transform absolute duration-700 ease-in-out ${action ? "translate-x-[115px] hover:scale-110 " : "-translate-x-[0px] "}`} >
                             <p href="/admin/post/All" className="w-[100px] m-[10px] z-0 flex h-full justify-center items-center text-gray-900 bg-gradient-to-r from-red-200 via-red-300 to-yellow-200 hover:bg-gradient-to-bl focus:ring-4 focus:outline-none focus:ring-red-100 dark:focus:ring-red-400 shadow-lg shadow-lime-500/50 dark:shadow-lg dark:shadow-lime-800/80 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2">
                                 All
                             </p>
@@ -169,21 +158,18 @@ export function Post() {
                         `} onClick={handleAction}>
                             <p>{Use}</p>
                         </div>
-                        <div
-                            className={`w-[1000px] items-center justify-center flex transition-opacity duration-300 ease-in-out ${
-                                !action ? 'opacity-100' : 'opacity-0 pointer-events-none'
-                            }`}
-                            >
-                        {input}
+                        <div className={`w-[1000px] items-center justify-center flex transition-opacity duration-300 ease-in-out ${!action ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                            {input}
                         </div>
                     </div>
-                    <ul className="flex py-[20px] text-[20px] shadow-lg border rounded-t-lg ">
-                        <li className="w-[2%] pl-[2%]"><input type="checkbox" className="size-4 cursor-pointer" onClick={() => handleCheckAll()} /></li>
-                        <li className="w-[25%]">Name</li>
-                        <li className="w-[10%]">File Size</li>
+                    <ul className="flex py-[20px] text-[20px] shadow-lg border rounded-t-lg">
+                        <li className="w-[2%] pl-[2%]"><input type="checkbox" className="size-4 cursor-pointer" onClick={handleCheckAll} /></li>
+                        <li className="w-[20%]">Name</li>
+                        <li className="w-[5%]">File Size</li>
                         <li className="w-[10%]">Piece Size</li>
-                        <li className="w-[12%] px-[2%]">Piece Count</li>
-                        <li className="w-[30%] px-[2%]">File Hash</li>
+                        <li className="w-[8%]">Piece Count</li>
+                        <li className="w-[30%] px-[2%] overflow-hidden">File Hash</li>
+                        <li className="w-[15%]">Proceed Download</li>
                         <li className="w-[10%]">Action</li>
                     </ul>
 
@@ -198,7 +184,14 @@ export function Post() {
                     }
                 </div>
             </div>
-            {status && <div className="status-message">{status}</div>} 
+            {status && <div className="status-message">
+                {status}
+                <div className="flex mt-[10px] w-full justify-center">
+
+                </div>
+            </div>}
+
+
         </div>
     );
 }
