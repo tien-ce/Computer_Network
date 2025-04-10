@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-4">
+  <h4>Kết nối với Tracker khác</h4>
+  <form id="tracker-form">
+    <div class="input-group mb-3">
+      <input type="text" class="form-control" name="tracker_url" placeholder="http://192.168.1.2:5000">
+      <button class="btn btn-primary" type="submit">Kết nối</button>
+    </div>
+  </form>
+  <div id="message" class="text-success"></div>
+</div>
+
+<script>
+document.getElementById("tracker-form").addEventListener("submit", function(e) {
+  e.preventDefault();
+  const form = e.target;
+  const data = new FormData(form);
+  fetch("/add-tracker", {
+    method: "POST",
+    body: data
+  }).then(res => res.json()).then(json => {
+    const msg = document.getElementById("message");
+    if (json.message) {
+      msg.innerText = json.message;
+      msg.classList = "text-success";
+    } else {
+      msg.innerText = json.error;
+      msg.classList = "text-danger";
+    }
+  });
+});
+</script>
+{% endblock %}

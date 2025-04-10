@@ -19,9 +19,11 @@ tracker_id = "TRACKER_" + uuid.uuid4().hex[:6]
 
 file_peer_map = {}
 processing_peers = {}
-PEER_TRACKERS = [
+PEER_TRACKERS = []
+peer_tracker_lock = threading.Lock()
+tracker_failures = {}
+MAX_FAILURES = 5
 
-]
 # --------- File Handling ---------
 def save_data_to_file():
     with open(TRACKER_DATA_FILE, "w") as f:
@@ -51,27 +53,35 @@ def merge_data(incoming_data):
 def sync_from_peers_periodically(interval=10):
     def sync_loop():
         while True:
-            for url in PEER_TRACKERS:
-                try:
-                    res = requests.get(f"{url}/api/tracker-data", timeout=3)
-                    if res.status_code == 200:
-                        data = res.json()
-                        peer_map = {}
-                        for peer in data["peers"]:
-                            info_hash = peer["info_hash"]
-                            entry = {
-                                "peer_id": peer["peer_id"],
-                                "ip": peer["ip"],
-                                "port": peer["port"]
-                            }
-                            peer_map.setdefault(info_hash, []).append(entry)
-                        merge_data(peer_map)
-                        save_data_to_file()
-                except Exception as e:
-                    print(f"Failed to sync from {url}: {e}")
+            with peer_tracker_lock:
+                for url in PEER_TRACKERS[:]:
+                    try:
+                        res = requests.get(f"{url}/api/tracker-data", timeout=3)
+                        if res.status_code == 200:
+                            data = res.json()
+                            peer_map = {}
+                            for peer in data["peers"]:
+                                info_hash = peer["info_hash"]
+                                entry = {
+                                    "peer_id": peer["peer_id"],
+                                    "ip": peer["ip"],
+                                    "port": peer["port"]
+                                }
+                                peer_map.setdefault(info_hash, []).append(entry)
+                            merge_data(peer_map)
+                            save_data_to_file()
+                            tracker_failures[url] = 0  # reset nếu thành công
+                    except Exception as e:
+                        print(f"[ERROR] Sync from {url} failed: {e}")
+                        tracker_failures[url] = tracker_failures.get(url, 0) + 1
+                        if tracker_failures[url] >= MAX_FAILURES:
+                            print(f"[REMOVE] Tracker {url} removed after {MAX_FAILURES} failures")
+                            PEER_TRACKERS.remove(url)
+                            tracker_failures.pop(url, None)
             time.sleep(interval)
 
     threading.Thread(target=sync_loop, daemon=True).start()
+
 
 # --------- Peer Matching Helper ---------
 def peer_match(p1, p2):
@@ -85,6 +95,27 @@ def home():
 @app.route("/processing")
 def processing():
     return render_template("processing.html")
+@app.route("/connect-tracker")
+def connect_tracker():
+    return render_template("connect_tracker.html")
+@app.route("/add-tracker", methods=["POST"])
+def add_tracker():
+    new_url = request.form.get("tracker_url")
+    if not new_url:
+        return jsonify({"error": "Missing tracker URL"}), 400
+
+    try:
+        res = requests.get(f"{new_url}/api/tracker-data", timeout=3)
+        if res.status_code == 200:
+            with peer_tracker_lock:
+                if new_url not in PEER_TRACKERS:
+                    PEER_TRACKERS.append(new_url)
+                    tracker_failures[new_url] = 0
+
+            return jsonify({"message": f"Added tracker {new_url}"})
+    except:
+        return jsonify({"error": "Cannot connect to tracker"}), 400
+
 @app.route("/announce")
 def announce():
     info_hash_raw = request.args.get("info_hash", "").lower()
@@ -197,4 +228,4 @@ def reload_data():
 if __name__ == "__main__":
     load_data_from_file()
     sync_from_peers_periodically(interval=10)
-    app.run(debug=True, host="0.0.0.0", port=5000)
+    app.run(debug=True, host="0.0.0.0", port=8080)
