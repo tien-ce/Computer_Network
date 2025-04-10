@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h4 class="mb-3">Danh sách Torrents</h4>
+
+<div id="tracker-output"></div>
+
+<script>
+function loadTrackerData() {
+  fetch("/api/tracker-data")
+    .then(res => res.json())
+    .then(data => {
+      const out = document.getElementById("tracker-output");
+      out.innerHTML = "";
+
+      if (data.torrents.length === 0) {
+        out.innerHTML = "<p>Không có dữ liệu.</p>";
+        return;
+      }
+
+      data.torrents.forEach(t => {
+        const peers = data.peers.filter(p => p.info_hash === t.info_hash);
+
+        const html = `
+          <div class="border-bottom mb-2 pb-2">
+            <strong>Hash:</strong> <code>${t.info_hash}</code><br>
+            <strong>Peers (${t.peer_count}):</strong>
+            <ul class="mb-1">
+              ${peers.map(p => `<li>${p.peer_id} - ${p.ip}:${p.port}</li>`).join("")}
+            </ul>
+          </div>
+        `;
+        out.innerHTML += html;
+      });
+    });
+}
+
+loadTrackerData();
+setInterval(loadTrackerData, 60000);
+</script>
+{% endblock %}

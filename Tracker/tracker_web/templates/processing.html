@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Peer Đang Tải{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+  <h2>Peer Đang Tải</h2>
+  <table class="table table-bordered table-sm table-hover mt-3">
+    <thead class="table-light">
+      <tr>
+        <th>Peer ID</th>
+        <th>Info Hash</th>
+        <th>Uploaded</th>
+        <th>Downloaded</th>
+        <th>Left</th>
+      </tr>
+    </thead>
+    <tbody id="processing-body">
+      <!-- Nội dung sẽ được cập nhật bằng JavaScript -->
+    </tbody>
+  </table>
+</div>
+
+<script>
+  async function fetchProcessingPeers() {
+    try {
+      const res = await fetch("/api/processing-peers");
+      const data = await res.json();
+      const tbody = document.getElementById("processing-body");
+      tbody.innerHTML = "";
+
+      for (const peer_id in data) {
+        const torrents = data[peer_id];
+        for (const info_hash in torrents) {
+          const p = torrents[info_hash];
+          const row = `
+            <tr>
+              <td>${peer_id}</td>
+              <td>${info_hash}</td>
+              <td>${p.uploaded}</td>
+              <td>${p.downloaded}</td>
+              <td>${p.left}</td>
+            </tr>
+          `;
+          tbody.innerHTML += row;
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi khi lấy dữ liệu:", err);
+    }
+  }
+
+  // Gọi hàm fetch mỗi 5 giây
+  fetchProcessingPeers();
+  setInterval(fetchProcessingPeers, 5000);
+</script>
+{% endblock %}
