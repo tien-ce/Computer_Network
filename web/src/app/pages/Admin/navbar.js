@@ -187,7 +187,7 @@ export function Navbar() {
 
                             <li>
                                 <a href={"/admin/post"} className={`my-1 flex py-5 w-full pl-4 rounded-lg hover:bg-[#2D2F39] relative cursor-pointer ${isActive === "post" ? 'bg-[#2D2F39] text-[#62fcaf]' : ''} `}>
-                                    <p className="text-[20px]">Post</p>
+                                    <p className="text-[20px]">Download Item</p>
                                 </a>
                             </li>
 
