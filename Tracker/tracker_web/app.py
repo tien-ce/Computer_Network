@@ -8,13 +8,15 @@ import uuid
 import time
 import requests
 import urllib
+import sys
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "joiafejgyinkpqhfywkndh"
 app.permanent_session_lifetime = timedelta(minutes=10)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TRACKER_DATA_FILE = os.path.join(BASE_DIR, "data/tracker_data.json")
-
+PROJECT_ROOT = os.path.join(BASE_DIR, "..","..","Peer-Peer")  # Parent directory
+sys.path.append(PROJECT_ROOT)
 tracker_id = "TRACKER_" + uuid.uuid4().hex[:6]
 
 file_peer_map = {}
@@ -225,7 +227,8 @@ def reload_data():
     return jsonify({"message": "Data reloaded from file"})
 
 # --------- App Start ---------
+from peer_shared.Info_shared import TRACKER_PORT
 if __name__ == "__main__":
     load_data_from_file()
     sync_from_peers_periodically(interval=10)
-    app.run(debug=True, host="0.0.0.0", port=8080)
+    app.run(debug=True, host="0.0.0.0", port= TRACKER_PORT)
