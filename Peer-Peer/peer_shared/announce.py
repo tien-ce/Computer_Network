@@ -24,7 +24,6 @@ def announce(info_hash,peer_id, port, event="started", uploaded=0, downloaded=0,
 
     try:
         # Tạo peer_id ngẫu nhiên
-        peer_id = str(uuid.uuid4())
 
         # Chuyển info_hash sang dạng byte, sau đó URL-encode
         info_hash_bytes = bytes.fromhex(info_hash)
@@ -33,7 +32,6 @@ def announce(info_hash,peer_id, port, event="started", uploaded=0, downloaded=0,
         # Tạo chuỗi truy vấn gửi lên tracker
         query_params = urllib.parse.urlencode({
             "info_hash": info_hash_encoded,
-            "peer_id": peer_id,
             "port": port,
             "uploaded": uploaded,
             "downloaded": downloaded,

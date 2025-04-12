@@ -128,7 +128,7 @@ def announce():
     ip = request.remote_addr
 
     if not peer_id:
-        raw = f"{ip}:{port}"
+        raw = f"{ip}"
         peer_id = "PEER_" + hashlib.sha1(raw.encode()).hexdigest()[:4]
 
     current_peer = {"peer_id": peer_id, "ip": ip, "port": port}
@@ -139,19 +139,6 @@ def announce():
     peer_list = file_peer_map.get(info_hash, [])
 
     if event == "started":
-        uploaded = request.args.get("uploaded", "")
-        downloaded = request.args.get("downloaded", "")
-        left = request.args.get("left", "")
-
-        if peer_id not in processing_peers:
-            processing_peers[peer_id] = {}
-
-        processing_peer = processing_peers[peer_id]
-        processing_peer[info_hash] = {
-            "uploaded": uploaded,
-            "downloaded": downloaded,
-            "left": left
-        }
 
         return jsonify({
             "tracker": tracker_id,
@@ -180,17 +167,36 @@ def announce():
             file_peer_map[info_hash] = peer_list
             save_data_to_file()
 
-        # Xóa peer khỏi danh sách processing nếu có
-        if peer_id in processing_peers:
-            processing_peers[peer_id].pop(info_hash, None)
-            if not processing_peers[peer_id]:  # Nếu không còn info_hash nào đang xử lý
-                del processing_peers[peer_id]
-
         return jsonify({
             "tracker": tracker_id,
             "warning": "peer added",
             "peers": peer_list
         })
+    
+    elif event == "update":
+        uploaded = request.args.get("uploaded", "")
+        downloaded = request.args.get("downloaded", "")
+        left = request.args.get("left", "")
+
+        if peer_id not in processing_peers:
+            processing_peers[peer_id] = {}
+
+        processing_peer = processing_peers[peer_id]
+        processing_peer[info_hash] = {
+            "uploaded": uploaded,
+            "downloaded": downloaded,
+            "left": left
+        }
+        if left == "0":
+        # Xóa peer khỏi danh sách processing nếu có
+            if peer_id in processing_peers:
+                processing_peers[peer_id].pop(info_hash, None)
+                if not processing_peers[peer_id]:  # Nếu không còn info_hash nào đang xử lý
+                    del processing_peers[peer_id]
+        return jsonify({
+            "tracker": tracker_id,
+        })
+
 
     return jsonify({"failure reason": "Invalid event"}), 400
 @app.route("/api/tracker-data")
