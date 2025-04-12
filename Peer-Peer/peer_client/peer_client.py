@@ -60,10 +60,9 @@ def start_download_from_torrent(TORRENT_PATH,SAVE_DIR):
                 piece_size=piece_size,
                 total_pieces=piece_count
             )
-            show_progress_bar(downloaded_parts, piece_count)
+            # show_progress_bar(downloaded_parts, piece_count)
             time.sleep(0.2)  # Cho dễ thấy tiến độ (có thể bỏ đi)
         time.sleep(3)  # Tránh gọi liên tục
-
     # Bước 4 : Ghép file
     with open(save_path, 'wb') as out:
         for i in range(piece_count):

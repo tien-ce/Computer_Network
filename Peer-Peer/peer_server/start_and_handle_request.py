@@ -3,11 +3,16 @@ import threading
 import json
 # Hàm xử lý khi nhận yêu cầu từ peer khác
 import os
-import json
-
-import os
-import json
-
+import sys
+#---------------------- Add paths for importing ------------------------------------#
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.join(BASE_DIR, "..")  # Parent directory
+sys.path.append(PROJECT_ROOT)
+sys.path.append(BASE_DIR)
+from peer_shared.announce import announce
+from peer_shared.Info_shared import TRACKER_IP, TRACKER_PORT,PIECE_SIZE
+#----------------------------------------------------------------------------------#
+stop_server_flag = threading.Event()
 def handle_peer_request(conn, addr, file_path, total_parts,piece_length):
     """
     Hàm xử lý yêu cầu từ một peer khác.
@@ -72,16 +77,25 @@ def handle_peer_request(conn, addr, file_path, total_parts,piece_length):
         conn.close()
 
 # Hàm khởi chạy server lắng nghe yêu cầu tải mảnh từ peer khác
-def start_peer_server(port, file_path, total_parts,piece_length): 
+def start_peer_server(port, file_path, total_parts, piece_length):
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind(("0.0.0.0", port))
     server.listen(5)
 
     print(f"Peer server is listening on port {port}...")
 
-    while True:
-        conn, addr = server.accept()
-        thread = threading.Thread(
-            target=handle_peer_request, args=(conn, addr, file_path, total_parts,piece_length)
-        )
-        thread.start()
+    try:
+        while not stop_server_flag.is_set():
+            server.settimeout(1.0)  # cho phép thoát vòng lặp mỗi 1s
+            try:
+                conn, addr = server.accept()
+                thread = threading.Thread(
+                    target=handle_peer_request, args=(conn, addr, file_path, total_parts, piece_length)
+                )
+                thread.start()
+            except socket.timeout:
+                continue
+    finally:
+        server.close()
+        print("Peer server stopped.")
+        

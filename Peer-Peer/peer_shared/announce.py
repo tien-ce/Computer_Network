@@ -3,6 +3,7 @@ import urllib.parse
 import uuid
 import json
 from peer_shared.Info_shared import TRACKER_IP,TRACKER_PORT,PIECE_SIZE
+
 def announce(info_hash,peer_id, port, event="started", uploaded=0, downloaded=0, left=None,tracker_ip = TRACKER_IP,tracker_port = TRACKER_PORT):
     """
     Gửi HTTP GET request đến tracker để thông báo trạng thái của peer và nhận danh sách peer khác.

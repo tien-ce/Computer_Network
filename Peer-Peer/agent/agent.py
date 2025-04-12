@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 import threading
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -13,7 +12,7 @@ sys.path.append(BASE_DIR)
 
 from peer_server.peer_server import start_upload_server
 from peer_client.peer_client import start_download_from_torrent
-from peer_shared.choose_file_ui import choose_torrent_file, choose_save_dir, get_user_command, get_port
+from peer_shared.choose_file_ui import  get_port
 from parse_torrent import parse_torrent_file
 from peer_shared.Info_shared import PIECE_SIZE,TRACKER_IP,TRACKER_PORT
 torrent_path = None
@@ -44,12 +43,19 @@ def upload_file():
     file_name = request.json.get('file_path')  # Ví dụ: "Alice_in_wonderland.txt"
     if not file_name:
         return jsonify({"error": "No file was selected."}), 400
+    # Đường dẫn tới file gốc cần chia sẻ
+    file_path = os.path.join(PROJECT_ROOT, "file_server", file_name)
 
+    # Chia file nếu chưa có part
+    if not os.path.exists(f"{file_path}.part0"):
+        split_file(file_path, PIECE_SIZE)
+        print("[INFO] File split successfully.")
+    else:
+        print("[INFO] Part files already exist, skipping split.")
     # Xác định đường dẫn file torrent tương ứng
     file_path = os.path.join(PROJECT_ROOT, "file_server", file_name)
     torrent_path = file_path + ".torrent"
     print(f"[DEBUG][UPLOAD] Reading torrent file at: {torrent_path}")
-
     # Đọc metadata từ file .torrent
     try:
         meta = parse_torrent_file(torrent_path)
@@ -63,15 +69,7 @@ def upload_file():
     if not meta.get("file_name"):
         return jsonify({"error": "No file name found in torrent metadata."}), 400
 
-    # Đường dẫn tới file gốc cần chia sẻ
-    file_path = os.path.join(PROJECT_ROOT, "file_server", file_name)
 
-    # Chia file nếu chưa có part
-    if not os.path.exists(f"{file_path}.part0"):
-        split_file(file_path, piece_size)
-        print("[INFO] File split successfully.")
-    else:
-        print("[INFO] Part files already exist, skipping split.")
 
     # Xin port người dùng nhập (hoặc bạn có thể sinh port ngẫu nhiên)
     port_str = get_port()
